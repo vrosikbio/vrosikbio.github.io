@@ -229,6 +229,42 @@
 
         .main-title { font-size: 2.2rem; font-weight: 300; letter-spacing: -0.5px; color: var(--text-main); margin-bottom: 25px; }
         .main-title strong { font-weight: 600; }
+        .name-highlight {
+            position: relative;
+            display: inline-block;
+            padding: 0.08em 0.42em 0.14em;
+            margin-left: 0.1em;
+            border-radius: 0.45em;
+            color: #232323;
+            isolation: isolate;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+        .name-highlight::before {
+            content: "";
+            position: absolute;
+            inset: -0.06em;
+            border-radius: inherit;
+            background:
+                linear-gradient(rgba(10, 10, 10, 0.48), rgba(10, 10, 10, 0.48)),
+                url("images/background2.png") center/cover no-repeat;
+            opacity: 0.72;
+            filter: saturate(0.6) brightness(0.72) contrast(0.92);
+            z-index: -2;
+        }
+        .name-highlight::after {
+            content: "";
+            position: absolute;
+            inset: -0.06em;
+            border-radius: inherit;
+            background-image:
+                radial-gradient(rgba(255, 255, 255, 0.06) 0.7px, transparent 0.8px),
+                radial-gradient(rgba(0, 0, 0, 0.08) 0.7px, transparent 0.8px);
+            background-position: 0 0, 1.5px 1.5px;
+            background-size: 5px 5px;
+            opacity: 0.28;
+            mix-blend-mode: soft-light;
+            z-index: -1;
+        }
 
         #discord-status {
             display: inline-flex; flex-direction: column; align-items: center;
@@ -363,7 +399,7 @@
                 <img src="/images/profile.jpg" alt="vrosik" class="profile-pic">
             </div>
             
-            <h1 class="main-title anim-item d-3">Hello, I am <strong>vrosik</strong></h1>
+            <h1 class="main-title anim-item d-3">Hello, I am <strong class="name-highlight">vrosik</strong></h1>
 
             <div id="discord-status" class="anim-item d-4">
 
