@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I'm here</title>
+    <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+#spotify-cover {
+    margin-bottom: 10px;
+}
+
+#spotify-link {
+    display: inline-block;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: none;
+}
+
+#spotify-link:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+#spotify-img {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+}
+
+.spotify-img-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.spotify-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+    transition: opacity 0.5s ease;
+}
+
+.spotify-img.hidden {
+    opacity: 0;
+}
+
+.spotify-img.visible {
+    opacity: 1;
+}
+        
+.time {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+}
+
+@keyframes timeUp {
+    from {
+        transform: translateY(8px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+        :root {
+            --bg-dark: #070709;
+            --surface: rgba(25, 25, 30, 0.4);
+            --surface-hover: rgba(40, 40, 45, 0.6);
+            --border: rgba(255, 255, 255, 0.06);
+            --text-main: #f5f5f7;
+            --text-muted: #868690;
+            --accent: #00e5ff;
+            --accent-glow: rgba(0, 229, 255, 0.2);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+        ::selection { background: var(--accent-glow); color: var(--accent); }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+            cursor: none;
+            transition: background 0.6s ease, color 0.6s ease;
+        }
+
+        .cursor {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s;
+            mix-blend-mode: difference;
+        }
+        .cursor.hovering {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        #bg-video {
+            position: fixed;
+            top: 50%; left: 50%;
+            min-width: 100%; min-height: 100%;
+            z-index: -3;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            filter: brightness(0.15) contrast(1.2);
+            opacity: 0.8;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.05), transparent 50%),
+                        radial-gradient(circle at 50% 100%, rgba(255, 255, 255, 0.02), transparent 50%);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        #preloader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: opacity 1s cubic-bezier(0.8, 0, 0.2, 1);
+        }
+
+        .loader-text {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .loader-bar {
+            width: 150px; height: 1px; background: rgba(255,255,255,0.1);
+            position: relative; overflow: hidden;
+        }
+        .loader-bar::after {
+            content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 0%; 
+            background: var(--accent); animation: load 2s cubic-bezier(0.8, 0, 0.2, 1) forwards;
+        }
+
+        #continue-btn {
+            display: none;
+            padding: 12px 30px;
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            border-radius: 100px;
+            cursor: none;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 1s ease forwards;
+        }
+        #continue-btn:hover {
+            background: var(--text-main);
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255,255,255,0.1);
+        }
+
+        @keyframes load { 0% {width: 0%;} 100% {width: 100%;} }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        main {
+            width: 90%; max-width: 600px; margin: 80px auto 40px; padding: 50px 40px;
+            background: var(--surface);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border); border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+            text-align: center;
+            opacity: 0; transform: translateY(30px); transition: opacity 1.2s ease, transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        body.loaded main { opacity: 1; transform: translateY(0); }
+
+        .anim-item { opacity: 0; transform: translateY(20px); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        body.loaded .anim-item { opacity: 1; transform: translateY(0); }
+        .d-1 { transition-delay: 0.2s; } .d-2 { transition-delay: 0.3s; } .d-3 { transition-delay: 0.4s; } .d-4 { transition-delay: 0.5s; } .d-5 { transition-delay: 0.6s; }
+
+        .system-status { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 30px; text-transform: uppercase; }
+
+        .profile-wrapper { position: relative; width: 120px; height: 120px; margin: 0 auto 25px; }
+        .profile-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); position: relative; z-index: 2; filter: grayscale(20%) contrast(1.1); transition: filter 0.5s ease; }
+        .profile-wrapper:hover .profile-pic { filter: grayscale(0%) contrast(1); }
+        
+        .profile-glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 130px; height: 130px; border-radius: 50%; background: var(--accent); filter: blur(25px); opacity: 0.15; z-index: 1; transition: background 0.6s ease, opacity 0.5s ease; }
+        .profile-wrapper:hover .profile-glow { opacity: 0.3; }
+
+        .main-title { font-size: 2.2rem; font-weight: 300; letter-spacing: -0.5px; color: var(--text-main); margin-bottom: 25px; }
+        .main-title strong { font-weight: 600; }
+
+        #discord-status {
+            display: inline-flex; flex-direction: column; align-items: center;
+            background: rgba(0, 0, 0, 0.3); padding: 12px 20px; border-radius: 12px;
+            border: 1px solid var(--border); margin-bottom: 30px; min-width: 250px;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .status-online { background: #23a55a; box-shadow: 0 0 10px rgba(35, 165, 90, 0.4); }
+        .status-idle { background: #f0b232; box-shadow: 0 0 10px rgba(240, 178, 50, 0.4); }
+        .status-dnd { background: #f23f43; box-shadow: 0 0 10px rgba(242, 63, 67, 0.4); }
+        .status-offline { background: #80848e; }
+        
+        #status-text {
+            white-space: normal;
+            text-align: center;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+        
+        .music-progress-container { display: none; width: 100%; padding-top: 5px; }
+        .music-info { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-muted); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
+        .music-progress-bar { width: 100%; height: 2px; background: rgba(255,255,255,0.05); position: relative; overflow: hidden; border-radius: 2px; }
+        .music-progress-fill { position: absolute; top: 0; left: 0; height: 100%; background: var(--accent); transition: width 0.3s linear; }
+
+        section { margin-bottom: 35px; }
+        h2 { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px; font-weight: 400; }
+        
+        .typing-container { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; display: flex; flex-direction: column; align-items: center; min-height: 60px; }
+        #typewriter-text { color: var(--text-main); }
+        .quote { margin-top: 10px; font-style: italic; opacity: 0.6; }
+
+        .links-grid { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        
+        .btn-new { 
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); 
+            color: var(--text-main); padding: 14px 20px; border-radius: 12px; text-decoration: none; 
+            font-weight: 400; font-size: 0.9rem; transition: all 0.3s ease;
+            cursor: none; width: 100%; position: relative; overflow: hidden;
+        }
+        .btn-new i { font-size: 1.1rem; color: var(--text-muted); transition: color 0.3s ease; }
+        .btn-new:hover { 
+            background: rgba(255, 255, 255, 0.06); 
+            border-color: rgba(255,255,255,0.15); 
+            transform: translateY(-2px); 
+        }
+        .btn-new:hover i { color: var(--text-main); }
+
+        footer { width: 100%; margin-top: auto; padding-bottom: 20px; opacity: 0; transition: opacity 1s ease 1.5s; }
+        body.loaded footer { opacity: 1; }
+        
+        .moments-gallery { width: 100%; overflow: hidden; position: relative; padding: 20px 0; mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); }
+        .moments-container { display: flex; width: max-content; }
+        .moments-gallery:hover .moments-container { animation-play-state: paused; }
+        .moment { width: 160px; height: 160px; margin: 0 8px; transition: transform 0.4s ease, filter 0.4s ease; flex-shrink: 0; border-radius: 12px; overflow: hidden; }
+        .moment img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(40%); transition: filter 0.4s ease; }
+        .moment:hover { transform: scale(1.02); z-index: 10; }
+        .moment:hover img { filter: grayscale(0%); }
+
+        @keyframes scrollGallery { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+        .music-control { 
+            position: fixed; bottom: 30px; right: 30px; width: 44px; height: 44px; 
+            border-radius: 50%; background: var(--surface); border: 1px solid var(--border); 
+            color: var(--text-muted); display: flex; align-items: center; justify-content: center; 
+            z-index: 100; transition: all 0.3s ease; opacity: 0; transform: translateY(20px); backdrop-filter: blur(10px);
+        }
+        body.loaded .music-control { opacity: 1; transform: translateY(0); transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 1.5s; }
+        .music-control:hover { color: var(--text-main); border-color: rgba(255,255,255,0.2); transform: scale(1.05) !important; }
+
+        @media (max-width: 600px) {
+            main { width: 92%; padding: 40px 25px; margin: 40px auto 20px; }
+            .cursor { display: none !important; } 
+            * { cursor: auto !important; }
+            
+            #discord-status {
+                min-width: unset;
+                width: 100%;
+                padding: 10px 12px;
+            }
+            
+            #status-text {
+                max-width: 100%;
+                font-size: 0.8rem;
+            }
+            
+            #spotify-img {
+                width: 100px;
+                height: 100px;
+            }
+        }
+    </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
+</head>
+<body>
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="images/background.MP4" type="video/mp4">
+    </video>
+
+    <div id="preloader">
+        <div class="loader-content" id="loader-init">
+            <div class="loader-text">INITIALIZING SYSTEM</div>
+            <div class="loader-bar"></div>
+        </div>
+        <button id="continue-btn">ENTER</button>
+    </div>
+
+    <div class="cursor"></div>
+
+    <main class="anim-item d-1" data-tilt data-tilt-max="2" data-tilt-speed="1000" data-tilt-glare data-tilt-max-glare="0.05">
+        <header>
+            <div class="system-status anim-item d-2">System Online</div>
+            <div class="profile-wrapper anim-item d-3">
+                <div class="profile-glow"></div>
+                <img src="/images/profile.jpg" alt="vrosik" class="profile-pic">
+            </div>
+            
+            <h1 class="main-title anim-item d-3">Hello, I am <strong>vrosik</strong></h1>
+
+            <div id="discord-status" class="anim-item d-4">
+
+                <div id="spotify-cover" style="display:none;">
+    <a id="spotify-link" href="#" target="_blank">
+        <div class="spotify-img-wrapper">
+            <img class="spotify-img img-a" src="">
+            <img class="spotify-img img-b" src="">
+        </div>
+    </a>
+</div>
+                
+                <div class="status-header">
+                    <div class="status-dot"></div>
+                    <span id="status-text">CONNECTING...</span>
+                </div>
+                <div class="music-progress-container">
+                    <div class="music-info">
+                        <span id="music-current-time" class="time"></span>
+                        <span id="music-total-time" class="time">0:00</span>
+                    </div>
+                    <div class="music-progress-bar">
+                        <div class="music-progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="anim-item d-5">
+            <h2>About</h2>
+            <div class="typing-container">
+                <p id="typewriter-text"></p>
+                <p class="quote">Эмоции умеют жрать - наркотики умеют ждать <span style="animation: blink 1s infinite; opacity: 0.5;">|</span></p>
+            </div>
+        </section>
+        <div class="pony">
+    <img src="/images/fluttershy.gif" alt="pony">
+</div>
+
+        <section class="anim-item d-5">
+            <h2>Links</h2>
+            <div class="links-grid">
+            <a href="https://t.me/hitmysoul" class="btn-new"><i class="fab fa-telegram-plane"></i> Telegram</a>
+            <a href="https://discord.com/users/moshenic" class="btn-new"><i class="fab fa-discord"></i> Discord</a>
+            <a href="https://www.youtube.com/@vrosek" class="btn-new"><i class="fab fa-youtube"></i> YouTube</a>
+            <a href="https://www.twitch.tv/vrosik" class="btn-new"><i class="fab fa-twitch"></i> Twitch</a>
+            <a href="https://ru.pinterest.com/knife891/_profile/" class="btn-new"><i class="fab fa-pinterest"></i> Pinterest</a>
+            <a href="https://steamcommunity.com/profiles/76561199501156798" class="btn-new"><i class="fab fa-steam"></i> Steam</a>
+            <a href="https://github.com/vrosek/vrosek.github.io" class="btn-new"><i class="fab fa-github"></i> GitHub</a>
+            <a href="https://open.spotify.com/user/313ifveoymwrbkw3e2yvji2vhadi" class="btn-new"><i class="fab fa-spotify"></i> Spotify</a>
+            </div>
+        </section>
+        </main>
+
+        <footer>
+        <div class="moments-gallery">
+            <div class="moments-container">
+            <div class="moment"><img src="/images/sun1.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun2.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun3.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun4.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun5.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun6.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun7.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun8.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun9.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun10.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun13.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun14.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun15.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun16.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun17.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun18.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun19.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun20.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun21.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun22.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun23.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun24.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun26.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun27.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun28.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun29.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun31.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun32.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun33.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun1.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun2.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun3.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun4.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun5.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun6.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun7.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun8.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun9.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun10.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun13.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun14.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun15.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun16.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun17.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun18.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun19.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun20.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun21.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun22.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun23.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun24.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun26.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun27.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun28.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun29.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun31.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun32.jpg" alt="Gallery"></div>
+            <div class="moment"><img src="/images/sun33.jpg" alt="Gallery"></div>
+            </div>
+        </div>
+        </footer>
+
+        <audio id="bgMusic" loop>
+        <source src="/music/background.mp3" type="audio/mpeg">
+        </audio>
+        <div class="music-control" id="musicToggle"><i class="fas fa-volume-mute"></i></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+<script>
+const preloader = document.getElementById('preloader')
+const loaderInit = document.getElementById('loader-init')
+const continueBtn = document.getElementById('continue-btn')
+const bgMusic = document.getElementById('bgMusic')
+const cursor = document.querySelector('.cursor')
+
+const musicProgressContainer = document.querySelector('.music-progress-container')
+const musicCurrentTime = document.getElementById('music-current-time')
+const musicTotalTime = document.getElementById('music-total-time')
+const musicProgressFill = document.querySelector('.music-progress-fill')
+
+let musicProgressInterval
+let currentTrack = null
+let gameStartTime = null
+let gameName = ""
+let lastTrackId = null
+let lastPlayingState = null
+
+const imgA = document.querySelector('.img-a')
+const imgB = document.querySelector('.img-b')
+
+let activeImg = imgA
+let inactiveImg = imgB
+
+imgA.classList.add('visible')
+imgB.classList.add('hidden')
+
+function updateMusicProgress(startTime, endTime) {
+    if (!startTime || !endTime) return
+    const totalDuration = endTime - startTime
+    
+    const updateProgress = () => {
+        const now = Date.now()
+        const elapsed = now - startTime
+        
+        if (elapsed < 0 || elapsed > totalDuration) {
+            clearInterval(musicProgressInterval)
+            if(musicProgressContainer) musicProgressContainer.style.display = 'none'
+            return
+        }
+        
+        const progress = Math.min(Math.max(elapsed / totalDuration, 0), 1)
+        const currentSec = Math.floor(elapsed / 1000)
+        const totalSec = Math.floor(totalDuration / 1000)
+        
+        animateTime(musicCurrentTime, formatTime(currentSec))
+        musicTotalTime.textContent = formatTime(totalSec)
+        musicProgressFill.style.width = progress * 100 + '%'
+    }
+    
+    clearInterval(musicProgressInterval)
+    updateProgress()
+    musicProgressInterval = setInterval(updateProgress, 1000)
+    if(musicProgressContainer) musicProgressContainer.style.display = 'block'
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return mins + ':' + (secs < 10 ? '0' : '') + secs
+}
+
+function setupGallery() {
+    const container = document.querySelector('.moments-container')
+    const moments = container.querySelectorAll('.moment')
+    if(moments.length === 0) return
+    const cloneCount = 3
+    for (let i = 0; i < cloneCount; i++) {
+        moments.forEach(moment => {
+            const clone = moment.cloneNode(true)
+            container.appendChild(clone)
+        })
+    }
+    const totalWidth = container.scrollWidth / cloneCount
+    container.style.animation = 'scrollGallery ' + (totalWidth * 0.015) + 's linear infinite'
+}
+
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        loaderInit.style.opacity = '0'
+        setTimeout(() => {
+            loaderInit.style.display = 'none'
+            continueBtn.style.display = 'block'
+        }, 500)
+    }, 1800)
+})
+
+continueBtn.addEventListener('click', () => {
+    preloader.style.opacity = '0'
+    bgMusic.volume = 0.15
+    bgMusic.play().catch(e => console.log(e))
+    document.getElementById('musicToggle').innerHTML = '<i class="fas fa-music"></i>'
+    
+    setTimeout(() => {
+        preloader.style.display = 'none'
+        document.body.classList.add('loaded')
+        setTimeout(typeWriter, 1000)
+        setupGallery()
+    }, 800)
+})
+
+window.addEventListener('mousemove', (e) => {
+    cursor.style.left = e.clientX + 'px'
+    cursor.style.top = e.clientY + 'px'
+})
+
+document.addEventListener('mouseover', (e) => {
+    if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.music-control') || e.target.closest('.moment')) {
+        cursor.classList.add('hovering')
+    }
+})
+document.addEventListener('mouseout', (e) => {
+    if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.music-control') || e.target.closest('.moment')) {
+        cursor.classList.remove('hovering')
+    }
+})
+
+const textToType = "10.12.2009 | City: Volgograd | Type: ISTJ | valid eblan"
+const typeContainer = document.getElementById('typewriter-text')
+let typeIndex = 0
+function typeWriter() {
+    if (typeIndex < textToType.length) {
+        typeContainer.innerHTML += textToType.charAt(typeIndex)
+        typeIndex++
+        setTimeout(typeWriter, 40)
+    }
+}
+
+const musicToggle = document.getElementById('musicToggle')
+musicToggle.addEventListener('click', function(e) {
+    e.stopPropagation()
+    if (bgMusic.paused) { 
+        bgMusic.play() 
+        musicToggle.innerHTML = '<i class="fas fa-music"></i>' 
+    } else { 
+        bgMusic.pause() 
+        musicToggle.innerHTML = '<i class="fas fa-volume-mute"></i>' 
+    }
+})
+
+const DISCORD_ID = '1491053386752196722'
+
+
+async function getDiscordStatus(){
+    try{
+        const res = await fetch('https://api.lanyard.rest/v1/users/' + DISCORD_ID)
+        const json = await res.json()
+        if(!json.success) return
+
+        const data = json.data
+        const dot = document.querySelector('.status-dot')
+        const musicBox = document.querySelector('.music-progress-container')
+
+        if(dot){
+            dot.className = 'status-dot status-' + data.discord_status
+        }
+
+        const activities = data.activities || []
+
+        if(data.listening_to_spotify && data.spotify){
+
+            if (!data.spotify.timestamps) {
+                lastPlayingState = false
+            }
+
+            const cover = document.getElementById('spotify-cover')
+            const link = document.getElementById('spotify-link')
+
+            if (cover && link) {
+                console.log(data.spotify.album_art_url)
+
+                const isNewTrack = data.spotify.track_id !== lastTrackId
+                const isResumed = lastPlayingState === false && data.spotify.timestamps
+
+                if (isNewTrack || isResumed) {
+                    lastTrackId = data.spotify.track_id
+
+                    const newSrc = data.spotify.album_art_url
+                    const newText = data.spotify.artist + ' - ' + data.spotify.song
+
+                    clearInterval(musicProgressInterval)
+                    if (musicProgressContainer) {
+                        musicProgressContainer.style.display = 'none'
+                    }
+
+                    const currentId = data.spotify.track_id
+
+                    inactiveImg.src = newSrc
+                    inactiveImg.crossOrigin = "anonymous"
+
+                    inactiveImg.onload = () => {
+                        if (currentId !== lastTrackId) return
+                        document.getElementById('status-text').textContent = newText
+
+                        inactiveImg.classList.add('visible')
+                        inactiveImg.classList.remove('hidden')
+
+                        activeImg.classList.remove('visible')
+                        activeImg.classList.add('hidden')
+
+                        const tempImg = activeImg
+                        activeImg = inactiveImg
+                        inactiveImg = tempImg
+
+                        const colorThief = new ColorThief()
+                        const color = colorThief.getColor(activeImg)
+
+                        const rgb = `rgb(${color[0]}, ${color[1]}, ${color[2]})`
+                        const glow = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`
+
+                        document.documentElement.style.setProperty('--accent', rgb)
+                        document.documentElement.style.setProperty('--accent-glow', glow)
+
+                        updateMusicProgress(
+                            data.spotify.timestamps.start,
+                            data.spotify.timestamps.end
+                        )
+                    }
+                }
+
+                link.href = 'https://open.spotify.com/track/' + data.spotify.track_id
+
+                cover.style.display = 'block'
+                
+                lastTrackId = data.spotify.track_id
+                lastPlayingState = true
+            }
+
+            return
+        }
+
+        const game = activities.find(a => a.type === 0)
+        if(game){
+            gameName = game.name
+            gameStartTime = game.timestamps ? game.timestamps.start : null
+            document.getElementById('status-text').textContent = '🎮 ' + gameName
+            if(musicBox) musicBox.style.display = 'none'
+            const cover = document.getElementById('spotify-cover')
+            if (cover) cover.style.display = 'none'
+            return
+        } else {
+            gameStartTime = null
+        }
+
+        const custom = activities.find(a => a.type === 4)
+        if(custom){
+            document.getElementById('status-text').textContent = custom.state || ''
+            lastPlayingState = false
+            if(musicBox) musicBox.style.display='none'
+            const cover = document.getElementById('spotify-cover')
+            if (cover) cover.style.display = 'none'
+            return
+            
+        }
+
+        document.getElementById('status-text').textContent = data.discord_status.toUpperCase()
+        lastPlayingState = false
+        if(musicBox) musicBox.style.display='none'
+
+        const cover = document.getElementById('spotify-cover')
+        if (cover) cover.style.display = 'none'
+
+    }catch(e){
+        console.log(e)
+    }
+}
+
+function animateTime(el, newValue) {
+    const chars = newValue.split('')
+
+    let spans = el.querySelectorAll('span')
+
+    if (spans.length !== chars.length) {
+        el.innerHTML = ''
+        chars.forEach(char => {
+            const span = document.createElement('span')
+            span.textContent = char
+            el.appendChild(span)
+        })
+        return
+    }
+
+    chars.forEach((char, i) => {
+        if (spans[i].textContent !== char) {
+            spans[i].textContent = char
+
+            spans[i].style.animation = 'none'
+            spans[i].offsetHeight
+            spans[i].style.animation = 'timeUp 0.25s ease'
+        }
+    })
+}
+
+
+function initStaticTime(el) {
+    const chars = el.textContent.split('')
+    el.innerHTML = ''
+    chars.forEach(char => {
+        const span = document.createElement('span')
+        span.textContent = char
+        el.appendChild(span)
+    })
+}
+
+initStaticTime(musicTotalTime)
+    
+    
+setInterval(getDiscordStatus, 5000)
+getDiscordStatus()
+</script>
+
+    <div class="pony-bottom">
+    <img src="/images/ponya2.gif" alt="pony">
+</div>
+    
+</body>
+</html>
