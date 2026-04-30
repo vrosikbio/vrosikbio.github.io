@@ -211,6 +211,7 @@
             box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
             text-align: center;
             opacity: 0; transform: translateY(30px); transition: opacity 1.2s ease, transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
         }
         body.loaded main { opacity: 1; transform: translateY(0); }
 
@@ -352,6 +353,74 @@
         body.loaded .music-control { opacity: 1; transform: translateY(0); transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 1.5s; }
         .music-control:hover { color: var(--text-main); border-color: rgba(255,255,255,0.2); transform: scale(1.05) !important; }
 
+        /* ----- Page Transition Styles ----- */
+        #main-view, #projects-view {
+            width: 100%;
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        .project-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .project-card h3 {
+            font-size: 1.3rem;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        
+        .project-img {
+            max-width: 100%;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            filter: grayscale(15%);
+            transition: filter 0.4s ease, transform 0.3s ease;
+        }
+        
+        .project-img:hover {
+            filter: grayscale(0%);
+            transform: scale(1.02);
+        }
+        
+        .project-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        .btn-download {
+            background: rgba(0, 229, 255, 0.05);
+            border-color: rgba(0, 229, 255, 0.2);
+            color: var(--accent);
+            margin-top: 10px;
+        }
+        
+        .btn-download:hover {
+            background: rgba(0, 229, 255, 0.15);
+            border-color: rgba(0, 229, 255, 0.4);
+            color: var(--text-main);
+        }
+        
+        .btn-back {
+            width: max-content;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+        }
+
         @media (max-width: 600px) {
             main { width: 92%; padding: 40px 25px; margin: 40px auto 20px; }
             .cursor { display: none !important; } 
@@ -392,140 +461,193 @@
     <div class="cursor"></div>
 
     <main class="anim-item d-1" data-tilt data-tilt-max="2" data-tilt-speed="1000" data-tilt-glare data-tilt-max-glare="0.05">
-        <header>
-            <div class="system-status anim-item d-2">System Online</div>
-            <div class="profile-wrapper anim-item d-3">
-                <div class="profile-glow"></div>
-                <img src="/images/profile.jpg" alt="vrosik" class="profile-pic">
-            </div>
-            
-            <h1 class="main-title anim-item d-3">Hello, I am <strong class="name-highlight">vrosik</strong></h1>
-
-            <div id="discord-status" class="anim-item d-4">
-
-                <div id="spotify-cover" style="display:none;">
-    <a id="spotify-link" href="#" target="_blank">
-        <div class="spotify-img-wrapper">
-            <img class="spotify-img img-a" src="">
-            <img class="spotify-img img-b" src="">
-        </div>
-    </a>
-</div>
+        
+        <div id="main-view">
+            <header>
+                <div class="system-status anim-item d-2">System Online</div>
+                <div class="profile-wrapper anim-item d-3">
+                    <div class="profile-glow"></div>
+                    <img src="/images/profile.jpg" alt="vrosik" class="profile-pic">
+                </div>
                 
-                <div class="status-header">
-                    <div class="status-dot"></div>
-                    <span id="status-text">CONNECTING...</span>
-                </div>
-                <div class="music-progress-container">
-                    <div class="music-info">
-                        <span id="music-current-time" class="time"></span>
-                        <span id="music-total-time" class="time">0:00</span>
+                <h1 class="main-title anim-item d-3">Hello, I am <strong class="name-highlight">vrosik</strong></h1>
+
+                <div id="discord-status" class="anim-item d-4">
+
+                    <div id="spotify-cover" style="display:none;">
+        <a id="spotify-link" href="#" target="_blank">
+            <div class="spotify-img-wrapper">
+                <img class="spotify-img img-a" src="">
+                <img class="spotify-img img-b" src="">
+            </div>
+        </a>
+    </div>
+                    
+                    <div class="status-header">
+                        <div class="status-dot"></div>
+                        <span id="status-text">CONNECTING...</span>
                     </div>
-                    <div class="music-progress-bar">
-                        <div class="music-progress-fill"></div>
+                    <div class="music-progress-container">
+                        <div class="music-info">
+                            <span id="music-current-time" class="time"></span>
+                            <span id="music-total-time" class="time">0:00</span>
+                        </div>
+                        <div class="music-progress-bar">
+                            <div class="music-progress-fill"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </header>
+            </header>
 
-        <section class="anim-item d-5">
-            <h2>About</h2>
-            <div class="typing-container">
-                <p id="typewriter-text"></p>
-                <p class="quote">Эмоции умеют жрать - наркотики умеют ждать <span style="animation: blink 1s infinite; opacity: 0.5;">|</span></p>
+            <section class="anim-item d-5">
+                <h2>About</h2>
+                <div class="typing-container">
+                    <p id="typewriter-text"></p>
+                    <p class="quote">Эмоции умеют жрать - наркотики умеют ждать <span style="animation: blink 1s infinite; opacity: 0.5;">|</span></p>
+                </div>
+            </section>
+            
+            <div class="pony">
+                <img src="/images/fluttershy.gif" alt="pony">
             </div>
-        </section>
-        <div class="pony">
-    <img src="/images/fluttershy.gif" alt="pony">
-</div>
 
-        <section class="anim-item d-5">
-            <h2>Links</h2>
-            <div class="links-grid">
-            <a href="https://t.me/hitmysoul" class="btn-new"><i class="fab fa-telegram-plane"></i> Telegram</a>
-            <a href="https://discord.com/users/moshenic" class="btn-new"><i class="fab fa-discord"></i> Discord</a>
-            <a href="https://www.youtube.com/@vrosek" class="btn-new"><i class="fab fa-youtube"></i> YouTube</a>
-            <a href="https://www.twitch.tv/vrosik" class="btn-new"><i class="fab fa-twitch"></i> Twitch</a>
-            <a href="https://ru.pinterest.com/knife891/_profile/" class="btn-new"><i class="fab fa-pinterest"></i> Pinterest</a>
-            <a href="https://steamcommunity.com/profiles/76561199501156798" class="btn-new"><i class="fab fa-steam"></i> Steam</a>
-            <a href="https://github.com/vrosek/vrosek.github.io" class="btn-new"><i class="fab fa-github"></i> GitHub</a>
-            <a href="https://open.spotify.com/user/313ifveoymwrbkw3e2yvji2vhadi" class="btn-new"><i class="fab fa-spotify"></i> Spotify</a>
-            </div>
-        </section>
-        </main>
+            <section class="anim-item d-5">
+                <h2>Links</h2>
+                <div class="links-grid">
+                <a href="https://t.me/hitmysoul" class="btn-new"><i class="fab fa-telegram-plane"></i> Telegram</a>
+                <a href="https://discord.com/users/moshenic" class="btn-new"><i class="fab fa-discord"></i> Discord</a>
+                <a href="https://www.youtube.com/@vrosek" class="btn-new"><i class="fab fa-youtube"></i> YouTube</a>
+                <a href="https://www.twitch.tv/vrosik" class="btn-new"><i class="fab fa-twitch"></i> Twitch</a>
+                <a href="https://ru.pinterest.com/knife891/_profile/" class="btn-new"><i class="fab fa-pinterest"></i> Pinterest</a>
+                <a href="https://steamcommunity.com/profiles/76561199501156798" class="btn-new"><i class="fab fa-steam"></i> Steam</a>
+                <a href="https://github.com/vrosek/vrosek.github.io" class="btn-new"><i class="fab fa-github"></i> GitHub</a>
+                <a href="https://open.spotify.com/user/313ifveoymwrbkw3e2yvji2vhadi" class="btn-new"><i class="fab fa-spotify"></i> Spotify</a>
+                
+                <a href="#" id="open-projects-btn" class="btn-new" style="margin-top: 10px; border-color: rgba(255,255,255,0.2);"><i class="fas fa-folder-open"></i> My projects</a>
+                </div>
+            </section>
+        </div>
 
-        <footer>
-        <div class="moments-gallery">
-            <div class="moments-container">
-            <div class="moment"><img src="/images/sun1.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun2.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun3.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun4.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun5.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun6.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun7.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun8.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun9.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun10.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun13.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun14.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun15.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun16.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun17.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun18.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun19.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun20.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun21.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun22.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun23.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun24.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun26.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun27.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun28.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun29.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun31.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun32.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun33.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun1.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun2.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun3.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun4.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun5.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun6.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun7.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun8.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun9.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun10.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun13.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun14.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun15.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun16.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun17.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun18.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun19.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun20.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun21.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun22.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun23.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun24.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun26.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun27.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun28.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun29.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun31.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun32.jpg" alt="Gallery"></div>
-            <div class="moment"><img src="/images/sun33.jpg" alt="Gallery"></div>
+        <div id="projects-view" style="display: none; opacity: 0; transform: translateY(20px);">
+            <a href="#" id="back-btn" class="btn-new btn-back"><i class="fas fa-arrow-left"></i> Back</a>
+            
+            <h2>My Projects</h2>
+            <div class="project-card">
+                <h3>Call Of Duty 2 - Scally Mod</h3>
+                <img src="images/project1.png" alt="Call Of Duty 2 - Scally Mod" class="project-img">
+                <p class="project-desc">Мой первый чит, имеет несколько хороших функций, подробная информация в readme.txt</p>
+                <a href="files/ScallyMod.rar" download="ScallyMod.rar" class="btn-new btn-download"><i class="fas fa-download"></i> Скачать</a>
             </div>
         </div>
-        </footer>
 
-        <audio id="bgMusic" loop>
-        <source src="/music/background.mp3" type="audio/mpeg">
-        </audio>
-        <div class="music-control" id="musicToggle"><i class="fas fa-volume-mute"></i></div>
+    </main>
+
+    <footer>
+    <div class="moments-gallery">
+        <div class="moments-container">
+        <div class="moment"><img src="/images/sun1.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun2.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun3.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun4.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun5.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun6.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun7.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun8.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun9.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun10.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun13.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun14.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun15.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun16.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun17.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun18.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun19.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun20.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun21.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun22.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun23.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun24.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun26.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun27.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun28.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun29.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun31.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun32.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun33.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun1.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun2.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun3.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun4.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun5.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun6.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun7.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun8.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun9.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun10.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun13.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun14.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun15.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun16.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun17.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun18.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun19.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun20.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun21.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun22.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun23.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun24.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun26.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun27.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun28.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun29.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun31.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun32.jpg" alt="Gallery"></div>
+        <div class="moment"><img src="/images/sun33.jpg" alt="Gallery"></div>
+        </div>
+    </div>
+    </footer>
+
+    <audio id="bgMusic" loop>
+    <source src="/music/background.mp3" type="audio/mpeg">
+    </audio>
+    <div class="music-control" id="musicToggle"><i class="fas fa-volume-mute"></i></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
 <script>
+// --- PAGE TRANSITION LOGIC ---
+const mainView = document.getElementById('main-view');
+const projectsView = document.getElementById('projects-view');
+const btnOpenProjects = document.getElementById('open-projects-btn');
+const btnBack = document.getElementById('back-btn');
+
+function switchPage(hideEl, showEl) {
+    hideEl.style.opacity = '0';
+    hideEl.style.transform = 'translateY(-20px)';
+    
+    setTimeout(() => {
+        hideEl.style.display = 'none';
+        showEl.style.display = 'block';
+        
+        // Trigger reflow for animation
+        showEl.offsetHeight;
+        
+        showEl.style.opacity = '1';
+        showEl.style.transform = 'translateY(0)';
+    }, 400);
+}
+
+btnOpenProjects.addEventListener('click', (e) => {
+    e.preventDefault();
+    switchPage(mainView, projectsView);
+});
+
+btnBack.addEventListener('click', (e) => {
+    e.preventDefault();
+    switchPage(projectsView, mainView);
+});
+// -----------------------------
+
+
 const preloader = document.getElementById('preloader')
 const loaderInit = document.getElementById('loader-init')
 const continueBtn = document.getElementById('continue-btn')
