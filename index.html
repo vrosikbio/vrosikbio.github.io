@@ -791,6 +791,14 @@ musicToggle.addEventListener('click', function(e) {
 const DISCORD_ID = '1491053386752196722'
 
 
+function parseMpExternalUrl(mpUrl) {
+    if (!mpUrl) return null
+    // mp:external/{hash}/https/{rest_of_url}
+    const match = mpUrl.match(/^mp:external\/[^/]+\/https\/(.+)$/)
+    if (match) return 'https://' + match[1]
+    return null
+}
+
 async function getDiscordStatus(){
     try{
         const res = await fetch('https://api.lanyard.rest/v1/users/' + DISCORD_ID)
@@ -874,6 +882,90 @@ async function getDiscordStatus(){
                 
                 lastTrackId = data.spotify.track_id
                 lastPlayingState = true
+            }
+
+            return
+        }
+
+        // YouTube via PreMiD (type 3 = Watching)
+        const youtube = activities.find(a => a.type === 3 && a.name === 'YouTube')
+        if (youtube) {
+            const cover = document.getElementById('spotify-cover')
+            const link = document.getElementById('spotify-link')
+
+            const rawImg = youtube.assets && youtube.assets.large_image
+            const thumbUrl = parseMpExternalUrl(rawImg)
+
+            const videoTitle = youtube.details || 'YouTube'
+            const channelName = youtube.state || ''
+            const timestamps = youtube.timestamps
+
+            // unique key: activity id + start time
+            const ytKey = youtube.id + (timestamps ? timestamps.start : '')
+            const isNew = ytKey !== lastTrackId
+
+            if (isNew) {
+                lastTrackId = ytKey
+                clearInterval(musicProgressInterval)
+                if (musicProgressContainer) musicProgressContainer.style.display = 'none'
+
+                // Status text: channel — title
+                const displayText = channelName
+                    ? '▶ ' + channelName + ' — ' + videoTitle
+                    : '▶ ' + videoTitle
+                document.getElementById('status-text').textContent = displayText
+
+                if (cover && link) {
+                    // YouTube search link by title
+                    const searchQuery = encodeURIComponent((channelName ? channelName + ' ' : '') + videoTitle)
+                    link.href = 'https://www.youtube.com/results?search_query=' + searchQuery
+                    link.target = '_blank'
+
+                    if (thumbUrl) {
+                        // Remove crossOrigin — pd.premid.app doesn't send CORS headers,
+                        // crossOrigin="anonymous" makes the browser refuse to load the image
+                        inactiveImg.removeAttribute('crossorigin')
+                        inactiveImg.src = thumbUrl
+
+                        inactiveImg.onload = () => {
+                            inactiveImg.classList.add('visible')
+                            inactiveImg.classList.remove('hidden')
+                            activeImg.classList.remove('visible')
+                            activeImg.classList.add('hidden')
+
+                            const tmp = activeImg
+                            activeImg = inactiveImg
+                            inactiveImg = tmp
+
+                            // Can't use ColorThief without CORS — set YouTube red accent instead
+                            document.documentElement.style.setProperty('--accent', 'rgb(255, 0, 0)')
+                            document.documentElement.style.setProperty('--accent-glow', 'rgba(255, 0, 0, 0.25)')
+
+                            if (timestamps && timestamps.start && timestamps.end) {
+                                updateMusicProgress(timestamps.start, timestamps.end)
+                            }
+                        }
+
+                        inactiveImg.onerror = () => {
+                            cover.style.display = 'none'
+                            if (timestamps && timestamps.start && timestamps.end) {
+                                updateMusicProgress(timestamps.start, timestamps.end)
+                            }
+                        }
+
+                        cover.style.display = 'block'
+                    } else {
+                        cover.style.display = 'none'
+                        if (timestamps && timestamps.start && timestamps.end) {
+                            updateMusicProgress(timestamps.start, timestamps.end)
+                        }
+                    }
+                }
+
+                lastPlayingState = true
+            } else {
+                // Same video still playing — keep cover visible
+                if (cover) cover.style.display = thumbUrl ? 'block' : 'none'
             }
 
             return
