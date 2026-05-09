@@ -353,7 +353,7 @@
         body.loaded .music-control { opacity: 1; transform: translateY(0); transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 1.5s; }
         .music-control:hover { color: var(--text-main); border-color: rgba(255,255,255,0.2); transform: scale(1.05) !important; }
 
-        /* ----- Page Transition Styles ----- */
+       
         #main-view, #projects-view {
             width: 100%;
             transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -614,7 +614,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
 <script>
-// --- PAGE TRANSITION LOGIC ---
+
 const mainView = document.getElementById('main-view');
 const projectsView = document.getElementById('projects-view');
 const btnOpenProjects = document.getElementById('open-projects-btn');
@@ -628,7 +628,7 @@ function switchPage(hideEl, showEl) {
         hideEl.style.display = 'none';
         showEl.style.display = 'block';
         
-        // Trigger reflow for animation
+        
         showEl.offsetHeight;
         
         showEl.style.opacity = '1';
@@ -887,7 +887,7 @@ async function getDiscordStatus(){
             return
         }
 
-        // YouTube via PreMiD (type 3 = Watching)
+        
         const youtube = activities.find(a => a.type === 3 && a.name === 'YouTube')
         if (youtube) {
             const cover = document.getElementById('spotify-cover')
@@ -900,7 +900,7 @@ async function getDiscordStatus(){
             const channelName = youtube.state || ''
             const timestamps = youtube.timestamps
 
-            // unique key: activity id + start time
+            
             const ytKey = youtube.id + (timestamps ? timestamps.start : '')
             const isNew = ytKey !== lastTrackId
 
@@ -909,21 +909,20 @@ async function getDiscordStatus(){
                 clearInterval(musicProgressInterval)
                 if (musicProgressContainer) musicProgressContainer.style.display = 'none'
 
-                // Status text: channel — title
+                
                 const displayText = channelName
                     ? '▶ ' + channelName + ' — ' + videoTitle
                     : '▶ ' + videoTitle
                 document.getElementById('status-text').textContent = displayText
 
                 if (cover && link) {
-                    // YouTube search link by title
+                   
                     const searchQuery = encodeURIComponent((channelName ? channelName + ' ' : '') + videoTitle)
                     link.href = 'https://www.youtube.com/results?search_query=' + searchQuery
                     link.target = '_blank'
 
                     if (thumbUrl) {
-                        // Remove crossOrigin — pd.premid.app doesn't send CORS headers,
-                        // crossOrigin="anonymous" makes the browser refuse to load the image
+                        
                         inactiveImg.removeAttribute('crossorigin')
                         inactiveImg.src = thumbUrl
 
@@ -937,7 +936,7 @@ async function getDiscordStatus(){
                             activeImg = inactiveImg
                             inactiveImg = tmp
 
-                            // Can't use ColorThief without CORS — set YouTube red accent instead
+                            
                             document.documentElement.style.setProperty('--accent', 'rgb(255, 0, 0)')
                             document.documentElement.style.setProperty('--accent-glow', 'rgba(255, 0, 0, 0.25)')
 
@@ -964,7 +963,7 @@ async function getDiscordStatus(){
 
                 lastPlayingState = true
             } else {
-                // Same video still playing — keep cover visible
+                
                 if (cover) cover.style.display = thumbUrl ? 'block' : 'none'
             }
 
