@@ -475,13 +475,13 @@
                 <div id="discord-status" class="anim-item d-4">
 
                     <div id="spotify-cover" style="display:none;">
-        <a id="spotify-link" href="#" target="_blank">
-            <div class="spotify-img-wrapper">
-                <img class="spotify-img img-a" src="">
-                <img class="spotify-img img-b" src="">
-            </div>
-        </a>
-    </div>
+                        <a id="spotify-link" href="#" target="_blank">
+                            <div class="spotify-img-wrapper">
+                                <img class="spotify-img img-a" src="">
+                                <img class="spotify-img img-b" src="">
+                            </div>
+                        </a>
+                    </div>
                     
                     <div class="status-header">
                         <div class="status-dot"></div>
@@ -628,7 +628,7 @@ function switchPage(hideEl, showEl) {
         hideEl.style.display = 'none';
         showEl.style.display = 'block';
         
-showEl.offsetHeight;
+        showEl.offsetHeight;
         
         showEl.style.opacity = '1';
         showEl.style.transform = 'translateY(0)';
@@ -644,8 +644,6 @@ btnBack.addEventListener('click', (e) => {
     e.preventDefault();
     switchPage(projectsView, mainView);
 });
-
-
 
 const preloader = document.getElementById('preloader')
 const loaderInit = document.getElementById('loader-init')
@@ -664,6 +662,10 @@ let gameStartTime = null
 let gameName = ""
 let lastTrackId = null
 let lastPlayingState = null
+
+// --- FIX: хранит последние известные таймстампы для отслеживания перемотки ---
+let lastTimestamps = { start: null, end: null }
+const SEEK_THRESHOLD_MS = 3000 // погрешность 3 секунды
 
 const imgA = document.querySelector('.img-a')
 const imgB = document.querySelector('.img-b')
@@ -701,6 +703,16 @@ function updateMusicProgress(startTime, endTime) {
     updateProgress()
     musicProgressInterval = setInterval(updateProgress, 1000)
     if(musicProgressContainer) musicProgressContainer.style.display = 'block'
+}
+
+// --- FIX: проверяет нужно ли обновить прогресс из-за перемотки ---
+function checkAndSyncTimestamps(newStart, newEnd) {
+    if (!newStart || !newEnd) return
+    const drift = Math.abs(newStart - (lastTimestamps.start || 0))
+    if (drift > SEEK_THRESHOLD_MS) {
+        lastTimestamps = { start: newStart, end: newEnd }
+        updateMusicProgress(newStart, newEnd)
+    }
 }
 
 function formatTime(seconds) {
@@ -789,10 +801,8 @@ musicToggle.addEventListener('click', function(e) {
 
 const DISCORD_ID = '1491053386752196722'
 
-
 function parseMpExternalUrl(mpUrl) {
     if (!mpUrl) return null
-    // mp:external/{hash}/https/{rest_of_url}
     const match = mpUrl.match(/^mp:external\/[^/]+\/https\/(.+)$/)
     if (match) return 'https://' + match[1]
     return null
@@ -814,6 +824,7 @@ async function getDiscordStatus(){
 
         const activities = data.activities || []
 
+        // ---- SPOTIFY ----
         if(data.listening_to_spotify && data.spotify){
 
             if (!data.spotify.timestamps) {
@@ -824,8 +835,6 @@ async function getDiscordStatus(){
             const link = document.getElementById('spotify-link')
 
             if (cover && link) {
-                console.log(data.spotify.album_art_url)
-
                 const isNewTrack = data.spotify.track_id !== lastTrackId
                 const isResumed = lastPlayingState === false && data.spotify.timestamps
 
@@ -868,7 +877,22 @@ async function getDiscordStatus(){
                         document.documentElement.style.setProperty('--accent', rgb)
                         document.documentElement.style.setProperty('--accent-glow', glow)
 
-                        updateMusicProgress(
+                        if (data.spotify.timestamps) {
+                            // Новый трек — сохраняем таймстампы и запускаем прогресс
+                            lastTimestamps = {
+                                start: data.spotify.timestamps.start,
+                                end: data.spotify.timestamps.end
+                            }
+                            updateMusicProgress(
+                                data.spotify.timestamps.start,
+                                data.spotify.timestamps.end
+                            )
+                        }
+                    }
+                } else {
+                    // --- FIX: тот же трек — проверяем перемотку ---
+                    if (data.spotify.timestamps) {
+                        checkAndSyncTimestamps(
                             data.spotify.timestamps.start,
                             data.spotify.timestamps.end
                         )
@@ -876,9 +900,7 @@ async function getDiscordStatus(){
                 }
 
                 link.href = 'https://open.spotify.com/track/' + data.spotify.track_id
-
                 cover.style.display = 'block'
-                
                 lastTrackId = data.spotify.track_id
                 lastPlayingState = true
             }
@@ -886,6 +908,7 @@ async function getDiscordStatus(){
             return
         }
 
+        // ---- YOUTUBE ----
         const youtube = activities.find(a => a.type === 3 && a.name === 'YouTube')
         if (youtube) {
             const cover = document.getElementById('spotify-cover')
@@ -944,6 +967,8 @@ async function getDiscordStatus(){
                             colorImg.src = proxied
 
                             if (timestamps && timestamps.start && timestamps.end) {
+                                // Новое видео — сохраняем таймстампы
+                                lastTimestamps = { start: timestamps.start, end: timestamps.end }
                                 updateMusicProgress(timestamps.start, timestamps.end)
                             }
                         }
@@ -951,6 +976,7 @@ async function getDiscordStatus(){
                         inactiveImg.onerror = () => {
                             cover.style.display = 'none'
                             if (timestamps && timestamps.start && timestamps.end) {
+                                lastTimestamps = { start: timestamps.start, end: timestamps.end }
                                 updateMusicProgress(timestamps.start, timestamps.end)
                             }
                         }
@@ -959,6 +985,7 @@ async function getDiscordStatus(){
                     } else {
                         cover.style.display = 'none'
                         if (timestamps && timestamps.start && timestamps.end) {
+                            lastTimestamps = { start: timestamps.start, end: timestamps.end }
                             updateMusicProgress(timestamps.start, timestamps.end)
                         }
                     }
@@ -966,12 +993,17 @@ async function getDiscordStatus(){
 
                 lastPlayingState = true
             } else {
+                // --- FIX: то же видео — проверяем перемотку ---
                 if (cover) cover.style.display = thumbUrl ? 'block' : 'none'
+                if (timestamps && timestamps.start && timestamps.end) {
+                    checkAndSyncTimestamps(timestamps.start, timestamps.end)
+                }
             }
 
             return
         }
 
+        // ---- GAME ----
         const game = activities.find(a => a.type === 0)
         if(game){
             gameName = game.name
@@ -985,6 +1017,7 @@ async function getDiscordStatus(){
             gameStartTime = null
         }
 
+        // ---- CUSTOM STATUS ----
         const custom = activities.find(a => a.type === 4)
         if(custom){
             document.getElementById('status-text').textContent = custom.state || ''
@@ -993,7 +1026,6 @@ async function getDiscordStatus(){
             const cover = document.getElementById('spotify-cover')
             if (cover) cover.style.display = 'none'
             return
-            
         }
 
         document.getElementById('status-text').textContent = data.discord_status.toUpperCase()
@@ -1010,7 +1042,6 @@ async function getDiscordStatus(){
 
 function animateTime(el, newValue) {
     const chars = newValue.split('')
-
     let spans = el.querySelectorAll('span')
 
     if (spans.length !== chars.length) {
@@ -1026,14 +1057,12 @@ function animateTime(el, newValue) {
     chars.forEach((char, i) => {
         if (spans[i].textContent !== char) {
             spans[i].textContent = char
-
             spans[i].style.animation = 'none'
             spans[i].offsetHeight
             spans[i].style.animation = 'timeUp 0.25s ease'
         }
     })
 }
-
 
 function initStaticTime(el) {
     const chars = el.textContent.split('')
@@ -1046,15 +1075,14 @@ function initStaticTime(el) {
 }
 
 initStaticTime(musicTotalTime)
-    
-    
+
 setInterval(getDiscordStatus, 5000)
 getDiscordStatus()
 </script>
 
     <div class="pony-bottom">
-    <img src="/images/ponya2.gif" alt="pony">
-</div>
+        <img src="/images/ponya2.gif" alt="pony">
+    </div>
     
 </body>
 </html>
