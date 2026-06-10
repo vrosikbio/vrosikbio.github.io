@@ -353,7 +353,7 @@
         body.loaded .music-control { opacity: 1; transform: translateY(0); transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 1.5s; }
         .music-control:hover { color: var(--text-main); border-color: rgba(255,255,255,0.2); transform: scale(1.05) !important; }
 
-        /* ----- Page Transition Styles ----- */
+        
         #main-view, #projects-view {
             width: 100%;
             transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -663,9 +663,8 @@ let gameName = ""
 let lastTrackId = null
 let lastPlayingState = null
 
-// --- FIX: хранит последние известные таймстампы для отслеживания перемотки ---
 let lastTimestamps = { start: null, end: null }
-const SEEK_THRESHOLD_MS = 3000 // погрешность 3 секунды
+const SEEK_THRESHOLD_MS = 3000 
 
 const imgA = document.querySelector('.img-a')
 const imgB = document.querySelector('.img-b')
@@ -705,7 +704,6 @@ function updateMusicProgress(startTime, endTime) {
     if(musicProgressContainer) musicProgressContainer.style.display = 'block'
 }
 
-// --- FIX: проверяет нужно ли обновить прогресс из-за перемотки ---
 function checkAndSyncTimestamps(newStart, newEnd) {
     if (!newStart || !newEnd) return
     const drift = Math.abs(newStart - (lastTimestamps.start || 0))
@@ -824,7 +822,6 @@ async function getDiscordStatus(){
 
         const activities = data.activities || []
 
-        // ---- SPOTIFY ----
         if(data.listening_to_spotify && data.spotify){
 
             if (!data.spotify.timestamps) {
@@ -878,7 +875,7 @@ async function getDiscordStatus(){
                         document.documentElement.style.setProperty('--accent-glow', glow)
 
                         if (data.spotify.timestamps) {
-                            // Новый трек — сохраняем таймстампы и запускаем прогресс
+                            
                             lastTimestamps = {
                                 start: data.spotify.timestamps.start,
                                 end: data.spotify.timestamps.end
@@ -890,7 +887,7 @@ async function getDiscordStatus(){
                         }
                     }
                 } else {
-                    // --- FIX: тот же трек — проверяем перемотку ---
+                    
                     if (data.spotify.timestamps) {
                         checkAndSyncTimestamps(
                             data.spotify.timestamps.start,
@@ -908,7 +905,6 @@ async function getDiscordStatus(){
             return
         }
 
-        // ---- YOUTUBE ----
         const youtube = activities.find(a => a.type === 3 && a.name === 'YouTube')
         if (youtube) {
             const cover = document.getElementById('spotify-cover')
@@ -967,7 +963,7 @@ async function getDiscordStatus(){
                             colorImg.src = proxied
 
                             if (timestamps && timestamps.start && timestamps.end) {
-                                // Новое видео — сохраняем таймстампы
+                                
                                 lastTimestamps = { start: timestamps.start, end: timestamps.end }
                                 updateMusicProgress(timestamps.start, timestamps.end)
                             }
@@ -993,7 +989,7 @@ async function getDiscordStatus(){
 
                 lastPlayingState = true
             } else {
-                // --- FIX: то же видео — проверяем перемотку ---
+                
                 if (cover) cover.style.display = thumbUrl ? 'block' : 'none'
                 if (timestamps && timestamps.start && timestamps.end) {
                     checkAndSyncTimestamps(timestamps.start, timestamps.end)
@@ -1003,7 +999,6 @@ async function getDiscordStatus(){
             return
         }
 
-        // ---- GAME ----
         const game = activities.find(a => a.type === 0)
         if(game){
             gameName = game.name
@@ -1012,7 +1007,7 @@ async function getDiscordStatus(){
             if(musicBox) musicBox.style.display = 'none'
             const cover = document.getElementById('spotify-cover')
             if (cover) cover.style.display = 'none'
-            // --- FIX: сбрасываем lastTrackId чтобы при возврате на YouTube/Spotify всё обновилось ---
+            
             lastTrackId = null
             lastTimestamps = { start: null, end: null }
             return
@@ -1020,7 +1015,6 @@ async function getDiscordStatus(){
             gameStartTime = null
         }
 
-        // ---- CUSTOM STATUS ----
         const custom = activities.find(a => a.type === 4)
         if(custom){
             document.getElementById('status-text').textContent = custom.state || ''
@@ -1028,7 +1022,7 @@ async function getDiscordStatus(){
             if(musicBox) musicBox.style.display='none'
             const cover = document.getElementById('spotify-cover')
             if (cover) cover.style.display = 'none'
-            // --- FIX: сбрасываем lastTrackId чтобы при возврате на YouTube/Spotify всё обновилось ---
+            
             lastTrackId = null
             lastTimestamps = { start: null, end: null }
             return
@@ -1040,7 +1034,7 @@ async function getDiscordStatus(){
 
         const cover = document.getElementById('spotify-cover')
         if (cover) cover.style.display = 'none'
-        // --- FIX: сбрасываем lastTrackId чтобы при возврате на YouTube/Spotify всё обновилось ---
+        
         lastTrackId = null
         lastTimestamps = { start: null, end: null }
 
