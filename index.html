@@ -1012,6 +1012,9 @@ async function getDiscordStatus(){
             if(musicBox) musicBox.style.display = 'none'
             const cover = document.getElementById('spotify-cover')
             if (cover) cover.style.display = 'none'
+            // --- FIX: сбрасываем lastTrackId чтобы при возврате на YouTube/Spotify всё обновилось ---
+            lastTrackId = null
+            lastTimestamps = { start: null, end: null }
             return
         } else {
             gameStartTime = null
@@ -1025,6 +1028,9 @@ async function getDiscordStatus(){
             if(musicBox) musicBox.style.display='none'
             const cover = document.getElementById('spotify-cover')
             if (cover) cover.style.display = 'none'
+            // --- FIX: сбрасываем lastTrackId чтобы при возврате на YouTube/Spotify всё обновилось ---
+            lastTrackId = null
+            lastTimestamps = { start: null, end: null }
             return
         }
 
@@ -1034,6 +1040,9 @@ async function getDiscordStatus(){
 
         const cover = document.getElementById('spotify-cover')
         if (cover) cover.style.display = 'none'
+        // --- FIX: сбрасываем lastTrackId чтобы при возврате на YouTube/Spotify всё обновилось ---
+        lastTrackId = null
+        lastTimestamps = { start: null, end: null }
 
     }catch(e){
         console.log(e)
