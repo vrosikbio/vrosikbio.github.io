@@ -999,6 +999,80 @@ async function getDiscordStatus(){
             return
         }
 
+        const twitch = activities.find(a => a.type === 3 && a.name === 'Twitch')
+        if (twitch) {
+            const cover = document.getElementById('spotify-cover')
+            const link = document.getElementById('spotify-link')
+
+            const rawImg = twitch.assets && twitch.assets.large_image
+            const thumbUrl = parseMpExternalUrl(rawImg)
+
+            const streamTitle = twitch.details || 'Twitch'
+            const streamerName = twitch.state || ''
+
+            const twKey = streamTitle + streamerName
+            const isNew = twKey !== lastTrackId
+
+            if (isNew) {
+                lastTrackId = twKey
+                clearInterval(musicProgressInterval)
+                if (musicProgressContainer) musicProgressContainer.style.display = 'none'
+
+                const displayText = streamerName
+                    ? '🟣 ' + streamerName + ' — ' + streamTitle
+                    : '🟣 ' + streamTitle
+                document.getElementById('status-text').textContent = displayText
+
+                if (cover && link) {
+                    link.href = 'https://www.twitch.tv/' + (streamerName || '')
+                    link.target = '_blank'
+
+                    if (thumbUrl) {
+                        inactiveImg.removeAttribute('crossorigin')
+                        inactiveImg.src = thumbUrl
+
+                        inactiveImg.onload = () => {
+                            inactiveImg.classList.add('visible')
+                            inactiveImg.classList.remove('hidden')
+                            activeImg.classList.remove('visible')
+                            activeImg.classList.add('hidden')
+
+                            const tmp = activeImg
+                            activeImg = inactiveImg
+                            inactiveImg = tmp
+
+                            const proxied = thumbUrl.replace('https://', 'https://images.weserv.nl/?url=')
+                            const colorImg = new Image()
+                            colorImg.crossOrigin = 'anonymous'
+                            colorImg.onload = () => {
+                                try {
+                                    const colorThief = new ColorThief()
+                                    const color = colorThief.getColor(colorImg)
+                                    document.documentElement.style.setProperty('--accent', `rgb(${color[0]}, ${color[1]}, ${color[2]})`)
+                                    document.documentElement.style.setProperty('--accent-glow', `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`)
+                                } catch(e) {}
+                            }
+                            colorImg.src = proxied
+                        }
+
+                        inactiveImg.onerror = () => {
+                            cover.style.display = 'none'
+                        }
+
+                        cover.style.display = 'block'
+                    } else {
+                        cover.style.display = 'none'
+                    }
+                }
+
+                lastPlayingState = true
+            } else {
+                if (cover) cover.style.display = thumbUrl ? 'block' : 'none'
+            }
+
+            return
+        }
+
         const game = activities.find(a => a.type === 0)
         if(game){
             gameName = game.name
