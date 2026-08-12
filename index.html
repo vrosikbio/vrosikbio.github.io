@@ -631,7 +631,7 @@
 
     const commands = {
         help: () => `Available commands:<br><span class="terminal-cmd">help</span> — show this message<br><span class="terminal-cmd">whoami</span> — about me<br><span class="terminal-cmd">neofetch</span> — system info<br><span class="terminal-cmd">clear</span> — clear terminal<br><span class="terminal-cmd">matrix</span> — toggle matrix rain<br><span class="terminal-cmd">socials</span> — list social links<br><span class="terminal-cmd">age</span> — current age`,
-        whoami: () => `vrosik — 15 y.o. reverse engineer & modder from Volgograd, Russia.<br>ISTJ personality type. Likes ponies, coding and old games.`,
+        whoami: () => `vrosik - 16 y.o. reverse engineer & modder from Volgograd, Russia.<br>ISTJ personality type. Likes dota, coding and old games.`,
         neofetch: () => `<div class="terminal-ascii">${neofetchAscii}</div>OS: vrosikOS 1.0<br>Host: Volgograd, Russia<br>Kernel: ISTJ-10.12.2009<br>Uptime: ${getAgeString()}<br>Shell: zsh<br>Resolution: ${window.innerWidth}x${window.innerHeight}<br>DE: Dark Glass<br>WM: vrosik-wm`,
         clear: () => { terminalBody.innerHTML = '<div class="terminal-input-line"><span class="terminal-prompt">$</span><input type="text" id="terminal-input" placeholder="" autocomplete="off" spellcheck="false"></div>'; document.getElementById('terminal-input').focus(); return null; },
         matrix: () => { matrixActive = !matrixActive; matrixCanvas.classList.toggle('active', matrixActive); if (matrixActive) { initMatrix(); drawMatrix(); } return 'Matrix rain toggled.'; },
