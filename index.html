@@ -988,6 +988,83 @@
                 return;
             }
 
+            const film = activities.find(a => a.type === 3 && a.name === 'Фильм');
+            if (film) {
+                const cover = document.getElementById('spotify-cover');
+                const link = document.getElementById('spotify-link');
+                const rawImg = film.assets && film.assets.large_image;
+                let thumbUrl = parseMpExternalUrl(rawImg);
+                if (!thumbUrl && rawImg && rawImg.includes('https/')) {
+                    thumbUrl = 'https://' + rawImg.split('https/')[1];
+                }
+                const filmTitle = film.details || 'Фильм';
+                const timestamps = film.timestamps;
+                const isNew = filmTitle !== lastTrackId;
+                
+                if (isNew) {
+                    lastTrackId = filmTitle;
+                    clearInterval(musicProgressInterval);
+                    if (musicProgressContainer) musicProgressContainer.style.display = 'none';
+                    document.getElementById('status-text').textContent = '🎬 ' + filmTitle;
+                    
+                    if (cover && link) {
+                        link.href = '#';
+                        link.removeAttribute('target');
+                        
+                        if (thumbUrl) {
+                            inactiveImg.removeAttribute('crossorigin');
+                            inactiveImg.src = thumbUrl;
+                            inactiveImg.onload = () => {
+                                inactiveImg.classList.add('visible');
+                                inactiveImg.classList.remove('hidden');
+                                activeImg.classList.remove('visible');
+                                activeImg.classList.add('hidden');
+                                const tmp = activeImg;
+                                activeImg = inactiveImg;
+                                inactiveImg = tmp;
+                                
+                                const proxied = thumbUrl.replace('https://', 'https://images.weserv.nl/?url=');
+                                const colorImg = new Image();
+                                colorImg.crossOrigin = 'anonymous';
+                                colorImg.onload = () => {
+                                    try {
+                                        const colorThief = new ColorThief();
+                                        const color = colorThief.getColor(colorImg);
+                                        document.documentElement.style.setProperty('--accent', `rgb(${color[0]}, ${color[1]}, ${color[2]})`);
+                                        document.documentElement.style.setProperty('--accent-glow', `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`);
+                                    } catch(e) {}
+                                };
+                                colorImg.src = proxied;
+                                
+                                if (timestamps && timestamps.start && timestamps.end) {
+                                    lastTimestamps = { start: timestamps.start, end: timestamps.end };
+                                    updateMusicProgress(timestamps.start, timestamps.end);
+                                }
+                            };
+                            inactiveImg.onerror = () => {
+                                cover.style.display = 'none';
+                                if (timestamps && timestamps.start && timestamps.end) {
+                                    lastTimestamps = { start: timestamps.start, end: timestamps.end };
+                                    updateMusicProgress(timestamps.start, timestamps.end);
+                                }
+                            };
+                            cover.style.display = 'block';
+                        } else {
+                            cover.style.display = 'none';
+                            if (timestamps && timestamps.start && timestamps.end) {
+                                lastTimestamps = { start: timestamps.start, end: timestamps.end };
+                                updateMusicProgress(timestamps.start, timestamps.end);
+                            }
+                        }
+                    }
+                    lastPlayingState = true;
+                } else {
+                    if (cover) cover.style.display = thumbUrl ? 'block' : 'none';
+                    if (timestamps && timestamps.start && timestamps.end) checkAndSyncTimestamps(timestamps.start, timestamps.end);
+                }
+                return;
+            }
+
             const youtube = activities.find(a => a.type === 3 && a.name === 'YouTube');
             if (youtube) {
                 const cover = document.getElementById('spotify-cover');
