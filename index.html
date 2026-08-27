@@ -349,12 +349,12 @@
                 <p class="subtitle anim-item d-3">x64dbg</p>
                 <div id="discord-status" class="anim-item d-4">
                     <div id="spotify-cover" style="display:none;">
-                        <a id="spotify-link" href="#" target="_blank">
+                        <div id="spotify-link">
                             <div class="spotify-img-wrapper">
                                 <img class="spotify-img img-a" src="" alt="cover">
                                 <img class="spotify-img img-b" src="" alt="cover">
                             </div>
-                        </a>
+                        </div>
                     </div>
                     <div class="status-header">
                         <div class="status-dot"></div>
@@ -924,8 +924,16 @@
 
     function parseMpExternalUrl(mpUrl) {
         if (!mpUrl) return null;
-        const match = mpUrl.match(/^mp:external\/[^/]+\/https\/(.+)$/);
-        if (match) return 'https://' + match[1];
+        const match = mpUrl.match(/^mp:external\/[^/]+\/(.+)\/https\/(.+)$/);
+        if (match) {
+            try {
+                const prefix = decodeURIComponent(match[1]);
+                const target = decodeURIComponent(match[2]);
+                return 'https://' + target + (prefix.startsWith('?') ? prefix : '');
+            } catch (e) {
+                return 'https://' + match[2];
+            }
+        }
         return null;
     }
 
