@@ -472,150 +472,150 @@
     <div class="pony-bottom"><img src="/images/ponya2.gif" alt="pony"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
     <script>
-    const particlesCanvas = document.getElementById('particles-canvas');
-    const pCtx = particlesCanvas.getContext('2d');
-    let particles = [];
-    let mouseX = 0, mouseY = 0;
+const particlesCanvas = document.getElementById('particles-canvas');
+const pCtx = particlesCanvas.getContext('2d');
+let particles = [];
+let mouseX = 0, mouseY = 0;
 
-    function resizeParticles() {
-        particlesCanvas.width = window.innerWidth;
-        particlesCanvas.height = window.innerHeight;
+function resizeParticles() {
+    particlesCanvas.width = window.innerWidth;
+    particlesCanvas.height = window.innerHeight;
+}
+resizeParticles();
+window.addEventListener('resize', resizeParticles);
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * particlesCanvas.width;
+        this.y = Math.random() * particlesCanvas.height;
+        this.size = Math.random() * 2 + 0.5;
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.speedY = (Math.random() - 0.5) * 0.3;
+        this.opacity = Math.random() * 0.5 + 0.1;
     }
-    resizeParticles();
-    window.addEventListener('resize', resizeParticles);
-
-    class Particle {
-        constructor() {
-            this.x = Math.random() * particlesCanvas.width;
-            this.y = Math.random() * particlesCanvas.height;
-            this.size = Math.random() * 2 + 0.5;
-            this.speedX = (Math.random() - 0.5) * 0.3;
-            this.speedY = (Math.random() - 0.5) * 0.3;
-            this.opacity = Math.random() * 0.5 + 0.1;
+    update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if (this.x < 0) this.x = particlesCanvas.width;
+        if (this.x > particlesCanvas.width) this.x = 0;
+        if (this.y < 0) this.y = particlesCanvas.height;
+        if (this.y > particlesCanvas.height) this.y = 0;
+        const dx = mouseX - this.x;
+        const dy = mouseY - this.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 150) {
+            this.x -= dx * 0.01;
+            this.y -= dy * 0.01;
         }
-        update() {
-            this.x += this.speedX;
-            this.y += this.speedY;
-            if (this.x < 0) this.x = particlesCanvas.width;
-            if (this.x > particlesCanvas.width) this.x = 0;
-            if (this.y < 0) this.y = particlesCanvas.height;
-            if (this.y > particlesCanvas.height) this.y = 0;
-            const dx = mouseX - this.x;
-            const dy = mouseY - this.y;
+    }
+    draw() {
+        pCtx.fillStyle = `rgba(0, 229, 255, ${this.opacity})`;
+        pCtx.beginPath();
+        pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        pCtx.fill();
+    }
+}
+
+for (let i = 0; i < 60; i++) particles.push(new Particle());
+
+setTimeout(() => {
+    const spaceHint = document.getElementById('space-hint');
+    if (spaceHint) spaceHint.classList.add('visible');
+}, 3000);
+
+function animateParticles() {
+    pCtx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
+    particles.forEach(p => { p.update(); p.draw(); });
+    for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
             const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < 150) {
-                this.x -= dx * 0.01;
-                this.y -= dy * 0.01;
+            if (dist < 120) {
+                pCtx.strokeStyle = `rgba(0, 229, 255, ${0.08 * (1 - dist/120)})`;
+                pCtx.lineWidth = 0.5;
+                pCtx.beginPath();
+                pCtx.moveTo(particles[i].x, particles[i].y);
+                pCtx.lineTo(particles[j].x, particles[j].y);
+                pCtx.stroke();
             }
         }
-        draw() {
-            pCtx.fillStyle = `rgba(0, 229, 255, ${this.opacity})`;
-            pCtx.beginPath();
-            pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            pCtx.fill();
-        }
     }
+    requestAnimationFrame(animateParticles);
+}
+animateParticles();
 
-    for (let i = 0; i < 60; i++) particles.push(new Particle());
+const matrixCanvas = document.getElementById('matrix-canvas');
+const mCtx = matrixCanvas.getContext('2d');
+let matrixActive = false;
+let matrixChars = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789";
+let matrixDrops = [];
 
-    setTimeout(() => {
-        const spaceHint = document.getElementById('space-hint');
-        if (spaceHint) spaceHint.classList.add('visible');
-    }, 3000);
+function initMatrix() {
+    matrixCanvas.width = window.innerWidth;
+    matrixCanvas.height = window.innerHeight;
+    const cols = Math.floor(matrixCanvas.width / 14);
+    matrixDrops = [];
+    for (let i = 0; i < cols; i++) matrixDrops.push(Math.random() * -100);
+}
+initMatrix();
+window.addEventListener('resize', initMatrix);
 
-    function animateParticles() {
-        pCtx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
-        particles.forEach(p => { p.update(); p.draw(); });
-        for (let i = 0; i < particles.length; i++) {
-            for (let j = i + 1; j < particles.length; j++) {
-                const dx = particles[i].x - particles[j].x;
-                const dy = particles[i].y - particles[j].y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < 120) {
-                    pCtx.strokeStyle = `rgba(0, 229, 255, ${0.08 * (1 - dist/120)})`;
-                    pCtx.lineWidth = 0.5;
-                    pCtx.beginPath();
-                    pCtx.moveTo(particles[i].x, particles[i].y);
-                    pCtx.lineTo(particles[j].x, particles[j].y);
-                    pCtx.stroke();
-                }
-            }
-        }
-        requestAnimationFrame(animateParticles);
+function drawMatrix() {
+    if (!matrixActive) return;
+    mCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+    mCtx.fillStyle = '#0F0';
+    mCtx.font = '14px monospace';
+    for (let i = 0; i < matrixDrops.length; i++) {
+        const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+        mCtx.fillText(char, i * 14, matrixDrops[i] * 14);
+        if (matrixDrops[i] * 14 > matrixCanvas.height && Math.random() > 0.975) matrixDrops[i] = 0;
+        matrixDrops[i]++;
     }
-    animateParticles();
+    requestAnimationFrame(drawMatrix);
+}
 
-    const matrixCanvas = document.getElementById('matrix-canvas');
-    const mCtx = matrixCanvas.getContext('2d');
-    let matrixActive = false;
-    let matrixChars = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789";
-    let matrixDrops = [];
-
-    function initMatrix() {
-        matrixCanvas.width = window.innerWidth;
-        matrixCanvas.height = window.innerHeight;
-        const cols = Math.floor(matrixCanvas.width / 14);
-        matrixDrops = [];
-        for (let i = 0; i < cols; i++) matrixDrops.push(Math.random() * -100);
+let konamiCode = [];
+const konamiSequence = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+document.addEventListener('keydown', (e) => {
+    konamiCode.push(e.key);
+    konamiCode = konamiCode.slice(-10);
+    if (konamiCode.join(',') === konamiSequence.join(',')) {
+        matrixActive = !matrixActive;
+        matrixCanvas.classList.toggle('active', matrixActive);
+        if (matrixActive) { initMatrix(); drawMatrix(); }
     }
-    initMatrix();
-    window.addEventListener('resize', initMatrix);
+});
 
-    function drawMatrix() {
-        if (!matrixActive) return;
-        mCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-        mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
-        mCtx.fillStyle = '#0F0';
-        mCtx.font = '14px monospace';
-        for (let i = 0; i < matrixDrops.length; i++) {
-            const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-            mCtx.fillText(char, i * 14, matrixDrops[i] * 14);
-            if (matrixDrops[i] * 14 > matrixCanvas.height && Math.random() > 0.975) matrixDrops[i] = 0;
-            matrixDrops[i]++;
-        }
-        requestAnimationFrame(drawMatrix);
+const terminal = document.getElementById('terminal');
+const terminalBody = document.getElementById('terminal-body');
+const terminalInput = document.getElementById('terminal-input');
+let terminalOpen = false;
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === '`' || e.key === 'ё' || e.key === '~') {
+        e.preventDefault();
+        terminalOpen = !terminalOpen;
+        terminal.classList.toggle('active', terminalOpen);
+        if (terminalOpen) setTimeout(() => terminalInput.focus(), 100);
     }
-
-    let konamiCode = [];
-    const konamiSequence = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
-    document.addEventListener('keydown', (e) => {
-        konamiCode.push(e.key);
-        konamiCode = konamiCode.slice(-10);
-        if (konamiCode.join(',') === konamiSequence.join(',')) {
-            matrixActive = !matrixActive;
-            matrixCanvas.classList.toggle('active', matrixActive);
-            if (matrixActive) { initMatrix(); drawMatrix(); }
-        }
-    });
-
-    const terminal = document.getElementById('terminal');
-    const terminalBody = document.getElementById('terminal-body');
-    const terminalInput = document.getElementById('terminal-input');
-    let terminalOpen = false;
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === '`' || e.key === 'ё' || e.key === '~') {
-            e.preventDefault();
-            terminalOpen = !terminalOpen;
-            terminal.classList.toggle('active', terminalOpen);
-            if (terminalOpen) setTimeout(() => terminalInput.focus(), 100);
-        }
-        if (e.key === 'Escape' && terminalOpen) {
-            terminalOpen = false;
-            terminal.classList.remove('active');
-        }
-    });
-
-    function addTerminalLine(html, isPrompt = false) {
-        const div = document.createElement('div');
-        div.className = 'terminal-line';
-        div.innerHTML = html;
-        const inputLine = terminalBody.querySelector('.terminal-input-line');
-        terminalBody.insertBefore(div, inputLine);
-        terminalBody.scrollTop = terminalBody.scrollHeight;
+    if (e.key === 'Escape' && terminalOpen) {
+        terminalOpen = false;
+        terminal.classList.remove('active');
     }
+});
 
-    const neofetchAscii = `
+function addTerminalLine(html, isPrompt = false) {
+    const div = document.createElement('div');
+    div.className = 'terminal-line';
+    div.innerHTML = html;
+    const inputLine = terminalBody.querySelector('.terminal-input-line');
+    terminalBody.insertBefore(div, inputLine);
+    terminalBody.scrollTop = terminalBody.scrollHeight;
+}
+
+const neofetchAscii = `
     ___      ___      ___      ___   
    /\__\    /\  \    /\  \    /\  \  
   /:/  /__  /::\  \  /::\  \  /::\  \ 
@@ -626,656 +626,663 @@
     \::/__/\/__/    \/__/    \/__/    
      \/__/                           `;
 
-    const commands = {
-        help: () => `Available commands:<br><span class="terminal-cmd">help</span> — show this message<br><span class="terminal-cmd">whoami</span> — about me<br><span class="terminal-cmd">neofetch</span> — system info<br><span class="terminal-cmd">clear</span> — clear terminal<br><span class="terminal-cmd">matrix</span> — toggle matrix rain<br><span class="terminal-cmd">socials</span> — list social links<br><span class="terminal-cmd">age</span> — current age`,
-        whoami: () => `vrosik - 16 y.o. reverse engineer & modder from Volgograd, Russia.<br>ISTJ personality type. Likes dota, coding and old games.`,
-        neofetch: () => `<div class="terminal-ascii">${neofetchAscii}</div>OS: vrosikOS 1.0<br>Host: Volgograd, Russia<br>Kernel: ISTJ-10.12.2009<br>Uptime: ${getAgeString()}<br>Shell: zsh<br>Resolution: ${window.innerWidth}x${window.innerHeight}<br>DE: Dark Glass<br>WM: vrosik-wm`,
-        clear: () => { terminalBody.innerHTML = '<div class="terminal-input-line"><span class="terminal-prompt">$</span><input type="text" id="terminal-input" placeholder="" autocomplete="off" spellcheck="false"></div>'; document.getElementById('terminal-input').focus(); return null; },
-        matrix: () => { matrixActive = !matrixActive; matrixCanvas.classList.toggle('active', matrixActive); if (matrixActive) { initMatrix(); drawMatrix(); } return 'Matrix rain toggled.'; },
-        socials: () => `Telegram: @hitmysoul<br>Discord: moshenic<br>YouTube: @vrosek<br>Twitch: vrosik<br>GitHub: vrosek`,
-        age: () => getAgeString()
-    };
+const commands = {
+    help: () => `Available commands:<br><span class="terminal-cmd">help</span> — show this message<br><span class="terminal-cmd">whoami</span> — about me<br><span class="terminal-cmd">neofetch</span> — system info<br><span class="terminal-cmd">clear</span> — clear terminal<br><span class="terminal-cmd">matrix</span> — toggle matrix rain<br><span class="terminal-cmd">socials</span> — list social links<br><span class="terminal-cmd">age</span> — current age`,
+    whoami: () => `vrosik - 16 y.o. reverse engineer & modder from Volgograd, Russia.<br>ISTJ personality type. Likes dota, coding and old games.`,
+    neofetch: () => `<div class="terminal-ascii">${neofetchAscii}</div>OS: vrosikOS 1.0<br>Host: Volgograd, Russia<br>Kernel: ISTJ-10.12.2009<br>Uptime: ${getAgeString()}<br>Shell: zsh<br>Resolution: ${window.innerWidth}x${window.innerHeight}<br>DE: Dark Glass<br>WM: vrosik-wm`,
+    clear: () => { terminalBody.innerHTML = '<div class="terminal-input-line"><span class="terminal-prompt">$</span><input type="text" id="terminal-input" placeholder="" autocomplete="off" spellcheck="false"></div>'; document.getElementById('terminal-input').focus(); return null; },
+    matrix: () => { matrixActive = !matrixActive; matrixCanvas.classList.toggle('active', matrixActive); if (matrixActive) { initMatrix(); drawMatrix(); } return 'Matrix rain toggled.'; },
+    socials: () => `Telegram: @hitmysoul<br>Discord: moshenic<br>YouTube: @vrosek<br>Twitch: vrosik<br>GitHub: vrosek`,
+    age: () => getAgeString()
+};
 
-    function getAgeString() {
-        const birth = new Date('2009-12-10T00:00:00');
-        const now = new Date();
-        const diff = now - birth;
-        const years = Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
-        const days = Math.floor((diff % (365.25 * 24 * 60 * 60 * 1000)) / (24 * 60 * 60 * 1000));
-        return `${years} years, ${days} days`;
-    }
+function getAgeString() {
+    const birth = new Date('2009-12-10T00:00:00');
+    const now = new Date();
+    const diff = now - birth;
+    const years = Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
+    const days = Math.floor((diff % (365.25 * 24 * 60 * 60 * 1000)) / (24 * 60 * 60 * 1000));
+    return `${years} years, ${days} days`;
+}
 
-    terminalInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const cmd = terminalInput.value.trim().toLowerCase();
-            addTerminalLine(`<span class="terminal-prompt">$</span> ${terminalInput.value}`);
-            if (commands[cmd]) {
-                const result = commands[cmd]();
-                if (result !== null) addTerminalLine(result);
-            } else if (cmd) {
-                addTerminalLine(`<span style="color:var(--danger)">Command not found:</span> ${cmd}`);
-            }
-            terminalInput.value = '';
+terminalInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const cmd = terminalInput.value.trim().toLowerCase();
+        addTerminalLine(`<span class="terminal-prompt">$</span> ${terminalInput.value}`);
+        if (commands[cmd]) {
+            const result = commands[cmd]();
+            if (result !== null) addTerminalLine(result);
+        } else if (cmd) {
+            addTerminalLine(`<span style="color:var(--danger)">Command not found:</span> ${cmd}`);
         }
-    });
-
-    const terminalHeader = document.querySelector('.terminal-header');
-    let terminalDragging = false;
-    let terminalDragOffsetX = 0;
-    let terminalDragOffsetY = 0;
-
-    function startTerminalDrag(clientX, clientY) {
-        terminalDragging = true;
-        const rect = terminal.getBoundingClientRect();
-        terminalDragOffsetX = clientX - rect.left;
-        terminalDragOffsetY = clientY - rect.top;
-        terminal.style.left = rect.left + 'px';
-        terminal.style.top = rect.top + 'px';
-        terminal.style.right = 'auto';
-        terminal.style.bottom = 'auto';
-        terminal.classList.add('dragging');
+        terminalInput.value = '';
     }
+});
 
-    function moveTerminalDrag(clientX, clientY) {
-        if (!terminalDragging) return;
-        const width = terminal.offsetWidth;
-        const height = terminal.offsetHeight;
-        let newLeft = clientX - terminalDragOffsetX;
-        let newTop = clientY - terminalDragOffsetY;
-        newLeft = Math.min(Math.max(newLeft, 0), window.innerWidth - width);
-        newTop = Math.min(Math.max(newTop, 0), window.innerHeight - height);
-        terminal.style.left = newLeft + 'px';
-        terminal.style.top = newTop + 'px';
-    }
+const terminalHeader = document.querySelector('.terminal-header');
+let terminalDragging = false;
+let terminalDragOffsetX = 0;
+let terminalDragOffsetY = 0;
 
-    function endTerminalDrag() {
-        terminalDragging = false;
-        terminal.classList.remove('dragging');
-    }
+function startTerminalDrag(clientX, clientY) {
+    terminalDragging = true;
+    const rect = terminal.getBoundingClientRect();
+    terminalDragOffsetX = clientX - rect.left;
+    terminalDragOffsetY = clientY - rect.top;
+    terminal.style.left = rect.left + 'px';
+    terminal.style.top = rect.top + 'px';
+    terminal.style.right = 'auto';
+    terminal.style.bottom = 'auto';
+    terminal.classList.add('dragging');
+}
 
-    terminalHeader.addEventListener('mousedown', (e) => {
-        startTerminalDrag(e.clientX, e.clientY);
-    });
-    document.addEventListener('mousemove', (e) => {
-        moveTerminalDrag(e.clientX, e.clientY);
-    });
-    document.addEventListener('mouseup', endTerminalDrag);
+function moveTerminalDrag(clientX, clientY) {
+    if (!terminalDragging) return;
+    const width = terminal.offsetWidth;
+    const height = terminal.offsetHeight;
+    let newLeft = clientX - terminalDragOffsetX;
+    let newTop = clientY - terminalDragOffsetY;
+    newLeft = Math.min(Math.max(newLeft, 0), window.innerWidth - width);
+    newTop = Math.min(Math.max(newTop, 0), window.innerHeight - height);
+    terminal.style.left = newLeft + 'px';
+    terminal.style.top = newTop + 'px';
+}
 
-    terminalHeader.addEventListener('touchstart', (e) => {
-        const touch = e.touches[0];
-        startTerminalDrag(touch.clientX, touch.clientY);
-    }, { passive: true });
-    document.addEventListener('touchmove', (e) => {
-        if (!terminalDragging) return;
-        const touch = e.touches[0];
-        moveTerminalDrag(touch.clientX, touch.clientY);
-    }, { passive: true });
-    document.addEventListener('touchend', endTerminalDrag);
+function endTerminalDrag() {
+    terminalDragging = false;
+    terminal.classList.remove('dragging');
+}
 
-    function updateStats() {
-        const birth = new Date('2009-12-10T00:00:00+03:00');
-        const now = new Date();
-        const diff = now - birth;
-        const years = (diff / (365.25 * 24 * 60 * 60 * 1000)).toFixed(9);
-        document.getElementById('age-stat').textContent = years;
+terminalHeader.addEventListener('mousedown', (e) => {
+    startTerminalDrag(e.clientX, e.clientY);
+});
+document.addEventListener('mousemove', (e) => {
+    moveTerminalDrag(e.clientX, e.clientY);
+});
+document.addEventListener('mouseup', endTerminalDrag);
 
-        const volgogradTime = new Date().toLocaleTimeString('ru-RU', { timeZone: 'Europe/Volgograd', hour: '2-digit', minute: '2-digit' });
-        document.getElementById('time-stat').textContent = volgogradTime;
+terminalHeader.addEventListener('touchstart', (e) => {
+    const touch = e.touches[0];
+    startTerminalDrag(touch.clientX, touch.clientY);
+}, { passive: true });
+document.addEventListener('touchmove', (e) => {
+    if (!terminalDragging) return;
+    const touch = e.touches[0];
+    moveTerminalDrag(touch.clientX, touch.clientY);
+}, { passive: true });
+document.addEventListener('touchend', endTerminalDrag);
 
-        const nextBday = new Date(now.getFullYear(), 11, 10);
-        if (now > nextBday) nextBday.setFullYear(now.getFullYear() + 1);
-        const daysToBday = Math.ceil((nextBday - now) / (24 * 60 * 60 * 1000));
-        document.getElementById('bday-stat').textContent = daysToBday;
-    }
-    setInterval(updateStats, 100);
-    updateStats();
+function updateStats() {
+    const birth = new Date('2009-12-10T00:00:00+03:00');
+    const now = new Date();
+    const diff = now - birth;
+    const years = (diff / (365.25 * 24 * 60 * 60 * 1000)).toFixed(9);
+    document.getElementById('age-stat').textContent = years;
 
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                const fills = entry.target.querySelectorAll('.skill-fill');
-                fills.forEach(fill => {
-                    fill.style.width = fill.dataset.width + '%';
-                });
-            }
-        });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    const volgogradTime = new Date().toLocaleTimeString('ru-RU', { timeZone: 'Europe/Volgograd', hour: '2-digit', minute: '2-digit' });
+    document.getElementById('time-stat').textContent = volgogradTime;
 
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImg = document.getElementById('lightbox-img');
-    const lightboxClose = document.getElementById('lightbox-close');
+    const nextBday = new Date(now.getFullYear(), 11, 10);
+    if (now > nextBday) nextBday.setFullYear(now.getFullYear() + 1);
+    const daysToBday = Math.ceil((nextBday - now) / (24 * 60 * 60 * 1000));
+    document.getElementById('bday-stat').textContent = daysToBday;
+}
+setInterval(updateStats, 100);
+updateStats();
 
-    document.addEventListener('click', (e) => {
-        const moment = e.target.closest('.moment');
-        if (moment) {
-            lightboxImg.src = moment.querySelector('img').src;
-            lightbox.classList.add('active');
-        }
-    });
-    lightboxClose.addEventListener('click', () => lightbox.classList.remove('active'));
-    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.classList.remove('active'); });
-
-    document.addEventListener('mousedown', () => document.querySelector('.cursor').classList.add('click'));
-    document.addEventListener('mouseup', () => document.querySelector('.cursor').classList.remove('click'));
-
-    const mainView = document.getElementById('main-view');
-    const projectsView = document.getElementById('projects-view');
-    const btnOpenProjects = document.getElementById('open-projects-btn');
-    const btnBack = document.getElementById('back-btn');
-
-    function switchPage(hideEl, showEl) {
-        hideEl.style.opacity = '0';
-        hideEl.style.transform = 'translateY(-20px)';
-        setTimeout(() => {
-            hideEl.style.display = 'none';
-            showEl.style.display = 'block';
-            showEl.offsetHeight;
-            showEl.style.opacity = '1';
-            showEl.style.transform = 'translateY(0)';
-        }, 400);
-    }
-
-    btnOpenProjects.addEventListener('click', (e) => { e.preventDefault(); switchPage(mainView, projectsView); });
-    btnBack.addEventListener('click', (e) => { e.preventDefault(); switchPage(projectsView, mainView); });
-
-    const preloader = document.getElementById('preloader');
-    const loaderInit = document.getElementById('loader-init');
-    const continueBtn = document.getElementById('continue-btn');
-    const bgMusic = document.getElementById('bgMusic');
-    const cursor = document.querySelector('.cursor');
-
-    const musicProgressContainer = document.querySelector('.music-progress-container');
-    const musicCurrentTime = document.getElementById('music-current-time');
-    const musicTotalTime = document.getElementById('music-total-time');
-    const musicProgressFill = document.querySelector('.music-progress-fill');
-
-    let musicProgressInterval;
-    let currentTrack = null;
-    let gameStartTime = null;
-    let gameName = "";
-    let lastTrackId = null;
-    let lastPlayingState = null;
-    let lastTimestamps = { start: null, end: null };
-    const SEEK_THRESHOLD_MS = 3000;
-
-    const imgA = document.querySelector('.img-a');
-    const imgB = document.querySelector('.img-b');
-    let activeImg = imgA;
-    let inactiveImg = imgB;
-    imgA.classList.add('visible');
-    imgB.classList.add('hidden');
-
-    function updateMusicProgress(startTime, endTime) {
-        if (!startTime || !endTime) return;
-        const totalDuration = endTime - startTime;
-        const updateProgress = () => {
-            const now = Date.now();
-            const elapsed = now - startTime;
-            if (elapsed < 0 || elapsed > totalDuration) {
-                clearInterval(musicProgressInterval);
-                if(musicProgressContainer) musicProgressContainer.style.display = 'none';
-                return;
-            }
-            const progress = Math.min(Math.max(elapsed / totalDuration, 0), 1);
-            const currentSec = Math.floor(elapsed / 1000);
-            const totalSec = Math.floor(totalDuration / 1000);
-            animateTime(musicCurrentTime, formatTime(currentSec));
-            musicTotalTime.textContent = formatTime(totalSec);
-            musicProgressFill.style.width = progress * 100 + '%';
-        };
-        clearInterval(musicProgressInterval);
-        updateProgress();
-        musicProgressInterval = setInterval(updateProgress, 1000);
-        if(musicProgressContainer) musicProgressContainer.style.display = 'block';
-    }
-
-    function checkAndSyncTimestamps(newStart, newEnd) {
-        if (!newStart || !newEnd) return;
-        const drift = Math.abs(newStart - (lastTimestamps.start || 0));
-        if (drift > SEEK_THRESHOLD_MS) {
-            lastTimestamps = { start: newStart, end: newEnd };
-            updateMusicProgress(newStart, newEnd);
-        }
-    }
-
-    function formatTime(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return mins + ':' + (secs < 10 ? '0' : '') + secs;
-    }
-
-    function setupGallery() {
-        const container = document.getElementById('moments-container');
-        const moments = container.querySelectorAll('.moment');
-        if(moments.length === 0) return;
-        const cloneCount = 3;
-        for (let i = 0; i < cloneCount; i++) {
-            moments.forEach(moment => {
-                const clone = moment.cloneNode(true);
-                container.appendChild(clone);
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            const fills = entry.target.querySelectorAll('.skill-fill');
+            fills.forEach(fill => {
+                fill.style.width = fill.dataset.width + '%';
             });
         }
-        const totalWidth = container.scrollWidth / cloneCount;
-        container.style.animation = 'scrollGallery ' + (totalWidth * 0.015) + 's linear infinite';
+    });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightbox-img');
+const lightboxClose = document.getElementById('lightbox-close');
+
+document.addEventListener('click', (e) => {
+    const moment = e.target.closest('.moment');
+    if (moment) {
+        lightboxImg.src = moment.querySelector('img').src;
+        lightbox.classList.add('active');
     }
+});
+lightboxClose.addEventListener('click', () => lightbox.classList.remove('active'));
+lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.classList.remove('active'); });
 
-    window.addEventListener('load', () => {
-        setTimeout(() => {
-            loaderInit.style.opacity = '0';
-            setTimeout(() => {
-                loaderInit.style.display = 'none';
-                continueBtn.style.display = 'block';
-            }, 500);
-        }, 1800);
-    });
+document.addEventListener('mousedown', () => document.querySelector('.cursor').classList.add('click'));
+document.addEventListener('mouseup', () => document.querySelector('.cursor').classList.remove('click'));
 
-    continueBtn.addEventListener('click', () => {
-        preloader.style.opacity = '0';
-        bgMusic.volume = 0.15;
-        bgMusic.play().catch(e => console.log(e));
-        document.getElementById('musicToggle').innerHTML = '<i class="fas fa-music"></i>';
-        setTimeout(() => {
-            preloader.style.display = 'none';
-            document.body.classList.add('loaded');
-            setTimeout(typeWriter, 1000);
-            setupGallery();
-        }, 800);
-    });
+const mainView = document.getElementById('main-view');
+const projectsView = document.getElementById('projects-view');
+const btnOpenProjects = document.getElementById('open-projects-btn');
+const btnBack = document.getElementById('back-btn');
 
-    window.addEventListener('mousemove', (e) => {
-        cursor.style.left = e.clientX + 'px';
-        cursor.style.top = e.clientY + 'px';
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-    });
+function switchPage(hideEl, showEl) {
+    hideEl.style.opacity = '0';
+    hideEl.style.transform = 'translateY(-20px)';
+    setTimeout(() => {
+        hideEl.style.display = 'none';
+        showEl.style.display = 'block';
+        showEl.offsetHeight;
+        showEl.style.opacity = '1';
+        showEl.style.transform = 'translateY(0)';
+    }, 400);
+}
 
-    document.addEventListener('mouseover', (e) => {
-        if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.music-control') || e.target.closest('.moment')) {
-            cursor.classList.add('hovering');
-        }
-    });
-    document.addEventListener('mouseout', (e) => {
-        if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.music-control') || e.target.closest('.moment')) {
-            cursor.classList.remove('hovering');
-        }
-    });
+btnOpenProjects.addEventListener('click', (e) => { e.preventDefault(); switchPage(mainView, projectsView); });
+btnBack.addEventListener('click', (e) => { e.preventDefault(); switchPage(projectsView, mainView); });
 
-    const textToType = "10.12.2009 | City: Volgograd | Type: ISTJ | valid eblan";
-    const typeContainer = document.getElementById('typewriter-text');
-    let typeIndex = 0;
-    function typeWriter() {
-        if (typeIndex < textToType.length) {
-            typeContainer.innerHTML += textToType.charAt(typeIndex);
-            typeIndex++;
-            setTimeout(typeWriter, 40);
-        }
-    }
+const preloader = document.getElementById('preloader');
+const loaderInit = document.getElementById('loader-init');
+const continueBtn = document.getElementById('continue-btn');
+const bgMusic = document.getElementById('bgMusic');
+const cursor = document.querySelector('.cursor');
 
-    const musicToggle = document.getElementById('musicToggle');
-    musicToggle.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (bgMusic.paused) { bgMusic.play(); musicToggle.innerHTML = '<i class="fas fa-music"></i>'; }
-        else { bgMusic.pause(); musicToggle.innerHTML = '<i class="fas fa-volume-mute"></i>'; }
-    });
+const musicProgressContainer = document.querySelector('.music-progress-container');
+const musicCurrentTime = document.getElementById('music-current-time');
+const musicTotalTime = document.getElementById('music-total-time');
+const musicProgressFill = document.querySelector('.music-progress-fill');
 
-    const DISCORD_ID = '1491053386752196722';
+let musicProgressInterval;
+let currentTrack = null;
+let gameStartTime = null;
+let gameName = "";
+let lastTrackId = null;
+let lastPlayingState = null;
+let lastTimestamps = { start: null, end: null };
+const SEEK_THRESHOLD_MS = 3000;
 
-    function parseMpExternalUrl(mpUrl) {
-        if (!mpUrl) return null;
-        const match = mpUrl.match(/^mp:external\/[^/]+\/(.+)\/https\/(.+)$/);
-        if (match) {
-            try {
-                const prefix = decodeURIComponent(match[1]);
-                const target = decodeURIComponent(match[2]);
-                return 'https://' + target + (prefix.startsWith('?') ? prefix : '');
-            } catch (e) {
-                return 'https://' + match[2];
-            }
-        }
-        return null;
-    }
+const imgA = document.querySelector('.img-a');
+const imgB = document.querySelector('.img-b');
+let activeImg = imgA;
+let inactiveImg = imgB;
+imgA.classList.add('visible');
+imgB.classList.add('hidden');
 
-    async function getDiscordStatus(){
-        try{
-            const res = await fetch('https://api.lanyard.rest/v1/users/' + DISCORD_ID);
-            const json = await res.json();
-            if(!json.success) return;
-            const data = json.data;
-            const dot = document.querySelector('.status-dot');
-            const musicBox = document.querySelector('.music-progress-container');
-            if(dot) dot.className = 'status-dot status-' + data.discord_status;
-            const activities = data.activities || [];
-
-            if(data.listening_to_spotify && data.spotify){
-                if (!data.spotify.timestamps) lastPlayingState = false;
-                const cover = document.getElementById('spotify-cover');
-                const link = document.getElementById('spotify-link');
-                if (cover && link) {
-                    const isNewTrack = data.spotify.track_id !== lastTrackId;
-                    const isResumed = lastPlayingState === false && data.spotify.timestamps;
-                    if (isNewTrack || isResumed) {
-                        lastTrackId = data.spotify.track_id;
-                        const newSrc = data.spotify.album_art_url;
-                        const newText = data.spotify.artist + ' - ' + data.spotify.song;
-                        clearInterval(musicProgressInterval);
-                        if (musicProgressContainer) musicProgressContainer.style.display = 'none';
-                        const currentId = data.spotify.track_id;
-                        inactiveImg.src = newSrc;
-                        inactiveImg.crossOrigin = "anonymous";
-                        inactiveImg.onload = () => {
-                            if (currentId !== lastTrackId) return;
-                            document.getElementById('status-text').textContent = newText;
-                            inactiveImg.classList.add('visible');
-                            inactiveImg.classList.remove('hidden');
-                            activeImg.classList.remove('visible');
-                            activeImg.classList.add('hidden');
-                            const tempImg = activeImg;
-                            activeImg = inactiveImg;
-                            inactiveImg = tempImg;
-                            const colorThief = new ColorThief();
-                            const color = colorThief.getColor(activeImg);
-                            const rgb = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
-                            const glow = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`;
-                            document.documentElement.style.setProperty('--accent', rgb);
-                            document.documentElement.style.setProperty('--accent-glow', glow);
-                            if (data.spotify.timestamps) {
-                                lastTimestamps = { start: data.spotify.timestamps.start, end: data.spotify.timestamps.end };
-                                updateMusicProgress(data.spotify.timestamps.start, data.spotify.timestamps.end);
-                            }
-                        };
-                    } else {
-                        if (data.spotify.timestamps) checkAndSyncTimestamps(data.spotify.timestamps.start, data.spotify.timestamps.end);
-                    }
-                    link.href = 'https://open.spotify.com/track/' + data.spotify.track_id;
-                    cover.style.display = 'block';
-                    lastTrackId = data.spotify.track_id;
-                    lastPlayingState = true;
-                }
-                return;
-            }
-
-            const film = activities.find(a => a.type === 3 && a.name === 'Фильм');
-            if (film) {
-                const cover = document.getElementById('spotify-cover');
-                const link = document.getElementById('spotify-link');
-                const rawImg = film.assets && film.assets.large_image;
-                let thumbUrl = parseMpExternalUrl(rawImg);
-                if (!thumbUrl && rawImg && rawImg.includes('https/')) {
-                    thumbUrl = 'https://' + rawImg.split('https/')[1];
-                }
-                const filmTitle = film.details || 'Фильм';
-                const timestamps = film.timestamps;
-                const isNew = filmTitle !== lastTrackId;
-                
-                if (isNew) {
-                    lastTrackId = filmTitle;
-                    clearInterval(musicProgressInterval);
-                    if (musicProgressContainer) musicProgressContainer.style.display = 'none';
-                    document.getElementById('status-text').textContent = '🎬 ' + filmTitle;
-                    
-                    if (cover && link) {
-                        link.href = '#';
-                        link.removeAttribute('target');
-                        
-                        if (thumbUrl) {
-                            inactiveImg.removeAttribute('crossorigin');
-                            inactiveImg.src = thumbUrl;
-                            inactiveImg.onload = () => {
-                                inactiveImg.classList.add('visible');
-                                inactiveImg.classList.remove('hidden');
-                                activeImg.classList.remove('visible');
-                                activeImg.classList.add('hidden');
-                                const tmp = activeImg;
-                                activeImg = inactiveImg;
-                                inactiveImg = tmp;
-                                
-                                const proxied = thumbUrl.replace('https://', 'https://images.weserv.nl/?url=');
-                                const colorImg = new Image();
-                                colorImg.crossOrigin = 'anonymous';
-                                colorImg.onload = () => {
-                                    try {
-                                        const colorThief = new ColorThief();
-                                        const color = colorThief.getColor(colorImg);
-                                        document.documentElement.style.setProperty('--accent', `rgb(${color[0]}, ${color[1]}, ${color[2]})`);
-                                        document.documentElement.style.setProperty('--accent-glow', `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`);
-                                    } catch(e) {}
-                                };
-                                colorImg.src = proxied;
-                                
-                                if (timestamps && timestamps.start && timestamps.end) {
-                                    lastTimestamps = { start: timestamps.start, end: timestamps.end };
-                                    updateMusicProgress(timestamps.start, timestamps.end);
-                                }
-                            };
-                            inactiveImg.onerror = () => {
-                                cover.style.display = 'none';
-                                if (timestamps && timestamps.start && timestamps.end) {
-                                    lastTimestamps = { start: timestamps.start, end: timestamps.end };
-                                    updateMusicProgress(timestamps.start, timestamps.end);
-                                }
-                            };
-                            cover.style.display = 'block';
-                        } else {
-                            cover.style.display = 'none';
-                            if (timestamps && timestamps.start && timestamps.end) {
-                                lastTimestamps = { start: timestamps.start, end: timestamps.end };
-                                updateMusicProgress(timestamps.start, timestamps.end);
-                            }
-                        }
-                    }
-                    lastPlayingState = true;
-                } else {
-                    if (cover) cover.style.display = thumbUrl ? 'block' : 'none';
-                    if (timestamps && timestamps.start && timestamps.end) checkAndSyncTimestamps(timestamps.start, timestamps.end);
-                }
-                return;
-            }
-
-            const youtube = activities.find(a => a.type === 3 && a.name === 'YouTube');
-            if (youtube) {
-                const cover = document.getElementById('spotify-cover');
-                const link = document.getElementById('spotify-link');
-                const rawImg = youtube.assets && youtube.assets.large_image;
-                const thumbUrl = parseMpExternalUrl(rawImg);
-                const videoTitle = youtube.details || 'YouTube';
-                const channelName = youtube.state || '';
-                const timestamps = youtube.timestamps;
-                const ytKey = videoTitle + channelName;
-                const isNew = ytKey !== lastTrackId;
-                if (isNew) {
-                    lastTrackId = ytKey;
-                    clearInterval(musicProgressInterval);
-                    if (musicProgressContainer) musicProgressContainer.style.display = 'none';
-                    const displayText = channelName ? '▶ ' + channelName + ' — ' + videoTitle : '▶ ' + videoTitle;
-                    document.getElementById('status-text').textContent = displayText;
-                    if (cover && link) {
-                        const searchQuery = encodeURIComponent((channelName ? channelName + ' ' : '') + videoTitle);
-                        link.href = 'https://www.youtube.com/results?search_query=' + searchQuery;
-                        link.target = '_blank';
-                        if (thumbUrl) {
-                            inactiveImg.removeAttribute('crossorigin');
-                            inactiveImg.src = thumbUrl;
-                            inactiveImg.onload = () => {
-                                inactiveImg.classList.add('visible');
-                                inactiveImg.classList.remove('hidden');
-                                activeImg.classList.remove('visible');
-                                activeImg.classList.add('hidden');
-                                const tmp = activeImg;
-                                activeImg = inactiveImg;
-                                inactiveImg = tmp;
-                                const proxied = thumbUrl.replace('https://', 'https://images.weserv.nl/?url=');
-                                const colorImg = new Image();
-                                colorImg.crossOrigin = 'anonymous';
-                                colorImg.onload = () => {
-                                    try {
-                                        const colorThief = new ColorThief();
-                                        const color = colorThief.getColor(colorImg);
-                                        document.documentElement.style.setProperty('--accent', `rgb(${color[0]}, ${color[1]}, ${color[2]})`);
-                                        document.documentElement.style.setProperty('--accent-glow', `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`);
-                                    } catch(e) {}
-                                };
-                                colorImg.src = proxied;
-                                if (timestamps && timestamps.start && timestamps.end) {
-                                    lastTimestamps = { start: timestamps.start, end: timestamps.end };
-                                    updateMusicProgress(timestamps.start, timestamps.end);
-                                }
-                            };
-                            inactiveImg.onerror = () => {
-                                cover.style.display = 'none';
-                                if (timestamps && timestamps.start && timestamps.end) {
-                                    lastTimestamps = { start: timestamps.start, end: timestamps.end };
-                                    updateMusicProgress(timestamps.start, timestamps.end);
-                                }
-                            };
-                            cover.style.display = 'block';
-                        } else {
-                            cover.style.display = 'none';
-                            if (timestamps && timestamps.start && timestamps.end) {
-                                lastTimestamps = { start: timestamps.start, end: timestamps.end };
-                                updateMusicProgress(timestamps.start, timestamps.end);
-                            }
-                        }
-                    }
-                    lastPlayingState = true;
-                } else {
-                    if (cover) cover.style.display = thumbUrl ? 'block' : 'none';
-                    if (timestamps && timestamps.start && timestamps.end) checkAndSyncTimestamps(timestamps.start, timestamps.end);
-                }
-                return;
-            }
-
-            const twitch = activities.find(a => a.type === 3 && a.name === 'Twitch');
-            if (twitch) {
-                const cover = document.getElementById('spotify-cover');
-                const link = document.getElementById('spotify-link');
-                const rawImg = twitch.assets && twitch.assets.large_image;
-                const thumbUrl = parseMpExternalUrl(rawImg);
-                const streamTitle = twitch.details || 'Twitch';
-                const streamerName = twitch.state || '';
-                const twKey = streamTitle + streamerName;
-                const isNew = twKey !== lastTrackId;
-                if (isNew) {
-                    lastTrackId = twKey;
-                    clearInterval(musicProgressInterval);
-                    if (musicProgressContainer) musicProgressContainer.style.display = 'none';
-                    const displayText = streamerName ? '🟣 ' + streamerName + ' — ' + streamTitle : '🟣 ' + streamTitle;
-                    document.getElementById('status-text').textContent = displayText;
-                    if (cover && link) {
-                        link.href = 'https://www.twitch.tv/' + (streamerName || '');
-                        link.target = '_blank';
-                        if (thumbUrl) {
-                            inactiveImg.removeAttribute('crossorigin');
-                            inactiveImg.src = thumbUrl;
-                            inactiveImg.onload = () => {
-                                inactiveImg.classList.add('visible');
-                                inactiveImg.classList.remove('hidden');
-                                activeImg.classList.remove('visible');
-                                activeImg.classList.add('hidden');
-                                const tmp = activeImg;
-                                activeImg = inactiveImg;
-                                inactiveImg = tmp;
-                                const proxied = thumbUrl.replace('https://', 'https://images.weserv.nl/?url=');
-                                const colorImg = new Image();
-                                colorImg.crossOrigin = 'anonymous';
-                                colorImg.onload = () => {
-                                    try {
-                                        const colorThief = new ColorThief();
-                                        const color = colorThief.getColor(colorImg);
-                                        document.documentElement.style.setProperty('--accent', `rgb(${color[0]}, ${color[1]}, ${color[2]})`);
-                                        document.documentElement.style.setProperty('--accent-glow', `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`);
-                                    } catch(e) {}
-                                };
-                                colorImg.src = proxied;
-                            };
-                            inactiveImg.onerror = () => { cover.style.display = 'none'; };
-                            cover.style.display = 'block';
-                        } else {
-                            cover.style.display = 'none';
-                        }
-                    }
-                    lastPlayingState = true;
-                } else {
-                    if (cover) cover.style.display = thumbUrl ? 'block' : 'none';
-                }
-                return;
-            }
-
-            const game = activities.find(a => a.type === 0);
-            if(game){
-                gameName = game.name;
-                gameStartTime = game.timestamps ? game.timestamps.start : null;
-                document.getElementById('status-text').textContent = '🎮 ' + gameName;
-                if(musicBox) musicBox.style.display = 'none';
-                const cover = document.getElementById('spotify-cover');
-                if (cover) cover.style.display = 'none';
-                lastTrackId = null;
-                lastTimestamps = { start: null, end: null };
-                return;
-            } else {
-                gameStartTime = null;
-            }
-
-            const custom = activities.find(a => a.type === 4);
-            if(custom){
-                document.getElementById('status-text').textContent = custom.state || '';
-                lastPlayingState = false;
-                if(musicBox) musicBox.style.display='none';
-                const cover = document.getElementById('spotify-cover');
-                if (cover) cover.style.display = 'none';
-                lastTrackId = null;
-                lastTimestamps = { start: null, end: null };
-                return;
-            }
-
-            document.getElementById('status-text').textContent = data.discord_status.toUpperCase();
-            lastPlayingState = false;
-            if(musicBox) musicBox.style.display='none';
-            const cover = document.getElementById('spotify-cover');
-            if (cover) cover.style.display = 'none';
-            lastTrackId = null;
-            lastTimestamps = { start: null, end: null };
-        }catch(e){
-            console.log(e);
-        }
-    }
-
-    function animateTime(el, newValue) {
-        const chars = newValue.split('');
-        let spans = el.querySelectorAll('span');
-        if (spans.length !== chars.length) {
-            el.innerHTML = '';
-            chars.forEach(char => {
-                const span = document.createElement('span');
-                span.textContent = char;
-                el.appendChild(span);
-            });
+function updateMusicProgress(startTime, endTime) {
+    if (!startTime || !endTime) return;
+    const totalDuration = endTime - startTime;
+    const updateProgress = () => {
+        const now = Date.now();
+        const elapsed = now - startTime;
+        if (elapsed < 0 || elapsed > totalDuration) {
+            clearInterval(musicProgressInterval);
+            if(musicProgressContainer) musicProgressContainer.style.display = 'none';
             return;
         }
-        chars.forEach((char, i) => {
-            if (spans[i].textContent !== char) {
-                spans[i].textContent = char;
-                spans[i].style.animation = 'none';
-                spans[i].offsetHeight;
-                spans[i].style.animation = 'timeUp 0.25s ease';
-            }
+        const progress = Math.min(Math.max(elapsed / totalDuration, 0), 1);
+        const currentSec = Math.floor(elapsed / 1000);
+        const totalSec = Math.floor(totalDuration / 1000);
+        animateTime(musicCurrentTime, formatTime(currentSec));
+        musicTotalTime.textContent = formatTime(totalSec);
+        musicProgressFill.style.width = progress * 100 + '%';
+    };
+    clearInterval(musicProgressInterval);
+    updateProgress();
+    musicProgressInterval = setInterval(updateProgress, 1000);
+    if(musicProgressContainer) musicProgressContainer.style.display = 'block';
+}
+
+function checkAndSyncTimestamps(newStart, newEnd) {
+    if (!newStart || !newEnd) return;
+    const drift = Math.abs(newStart - (lastTimestamps.start || 0));
+    if (drift > SEEK_THRESHOLD_MS) {
+        lastTimestamps = { start: newStart, end: newEnd };
+        updateMusicProgress(newStart, newEnd);
+    }
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return mins + ':' + (secs < 10 ? '0' : '') + secs;
+}
+
+function setupGallery() {
+    const container = document.getElementById('moments-container');
+    const moments = container.querySelectorAll('.moment');
+    if(moments.length === 0) return;
+    const cloneCount = 3;
+    for (let i = 0; i < cloneCount; i++) {
+        moments.forEach(moment => {
+            const clone = moment.cloneNode(true);
+            container.appendChild(clone);
         });
     }
+    const totalWidth = container.scrollWidth / cloneCount;
+    container.style.animation = 'scrollGallery ' + (totalWidth * 0.015) + 's linear infinite';
+}
 
-    function initStaticTime(el) {
-        const chars = el.textContent.split('');
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        loaderInit.style.opacity = '0';
+        setTimeout(() => {
+            loaderInit.style.display = 'none';
+            continueBtn.style.display = 'block';
+        }, 500);
+    }, 1800);
+});
+
+continueBtn.addEventListener('click', () => {
+    preloader.style.opacity = '0';
+    bgMusic.volume = 0.15;
+    bgMusic.play().catch(e => console.log(e));
+    document.getElementById('musicToggle').innerHTML = '<i class="fas fa-music"></i>';
+    setTimeout(() => {
+        preloader.style.display = 'none';
+        document.body.classList.add('loaded');
+        setTimeout(typeWriter, 1000);
+        setupGallery();
+        fetchDiscordStatus();
+        setInterval(fetchDiscordStatus, 5000);
+    }, 800);
+});
+
+window.addEventListener('mousemove', (e) => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+});
+
+document.addEventListener('mouseover', (e) => {
+    if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.music-control') || e.target.closest('.moment')) {
+        cursor.classList.add('hovering');
+    }
+});
+document.addEventListener('mouseout', (e) => {
+    if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.music-control') || e.target.closest('.moment')) {
+        cursor.classList.remove('hovering');
+    }
+});
+
+const textToType = "10.12.2009 | City: Volgograd | Type: ISTJ | valid eblan";
+const typeContainer = document.getElementById('typewriter-text');
+let typeIndex = 0;
+function typeWriter() {
+    if (typeIndex < textToType.length) {
+        typeContainer.innerHTML += textToType.charAt(typeIndex);
+        typeIndex++;
+        setTimeout(typeWriter, 40);
+    }
+}
+
+const musicToggle = document.getElementById('musicToggle');
+musicToggle.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (bgMusic.paused) { bgMusic.play(); musicToggle.innerHTML = '<i class="fas fa-music"></i>'; }
+    else { bgMusic.pause(); musicToggle.innerHTML = '<i class="fas fa-volume-mute"></i>'; }
+});
+
+const DISCORD_ID = '1491053386752196722';
+const WORKER_URL = 'https://bitter-mountain-81e3.vrosik891.workers.dev/';
+
+function parseMpExternalUrl(mpUrl) {
+    if (!mpUrl) return null;
+    const match = mpUrl.match(/^mp:external\/[^/]+\/(.+)\/https\/(.+)$/);
+    if (match) {
+        try {
+            const prefix = decodeURIComponent(match[1]);
+            const target = decodeURIComponent(match[2]);
+            return 'https://' + target + (prefix.startsWith('?') ? prefix : '');
+        } catch (e) {
+            return 'https://' + match[2];
+        }
+    }
+    return null;
+}
+
+function updateDiscordStatus(data) {
+    if (!data || !data.success) return;
+    const payload = data.data;
+    const dot = document.querySelector('.status-dot');
+    const musicBox = document.querySelector('.music-progress-container');
+    if(dot) dot.className = 'status-dot status-' + payload.discord_status;
+    const activities = payload.activities || [];
+
+    if(payload.listening_to_spotify && payload.spotify){
+        if (!payload.spotify.timestamps) lastPlayingState = false;
+        const cover = document.getElementById('spotify-cover');
+        const link = document.getElementById('spotify-link');
+        if (cover && link) {
+            const isNewTrack = payload.spotify.track_id !== lastTrackId;
+            const isResumed = lastPlayingState === false && payload.spotify.timestamps;
+            if (isNewTrack || isResumed) {
+                lastTrackId = payload.spotify.track_id;
+                const newSrc = payload.spotify.album_art_url;
+                const newText = payload.spotify.artist + ' - ' + payload.spotify.song;
+                clearInterval(musicProgressInterval);
+                if (musicProgressContainer) musicProgressContainer.style.display = 'none';
+                const currentId = payload.spotify.track_id;
+                inactiveImg.src = newSrc;
+                inactiveImg.crossOrigin = "anonymous";
+                inactiveImg.onload = () => {
+                    if (currentId !== lastTrackId) return;
+                    document.getElementById('status-text').textContent = newText;
+                    inactiveImg.classList.add('visible');
+                    inactiveImg.classList.remove('hidden');
+                    activeImg.classList.remove('visible');
+                    activeImg.classList.add('hidden');
+                    const tempImg = activeImg;
+                    activeImg = inactiveImg;
+                    inactiveImg = tempImg;
+                    const colorThief = new ColorThief();
+                    const color = colorThief.getColor(activeImg);
+                    const rgb = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                    const glow = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`;
+                    document.documentElement.style.setProperty('--accent', rgb);
+                    document.documentElement.style.setProperty('--accent-glow', glow);
+                    if (payload.spotify.timestamps) {
+                        lastTimestamps = { start: payload.spotify.timestamps.start, end: payload.spotify.timestamps.end };
+                        updateMusicProgress(payload.spotify.timestamps.start, payload.spotify.timestamps.end);
+                    }
+                };
+            } else {
+                if (payload.spotify.timestamps) checkAndSyncTimestamps(payload.spotify.timestamps.start, payload.spotify.timestamps.end);
+            }
+            link.href = 'https://open.spotify.com/track/' + payload.spotify.track_id;
+            cover.style.display = 'block';
+            lastTrackId = payload.spotify.track_id;
+            lastPlayingState = true;
+        }
+        return;
+    }
+
+    const film = activities.find(a => a.type === 3 && a.name === 'Фильм');
+    if (film) {
+        const cover = document.getElementById('spotify-cover');
+        const link = document.getElementById('spotify-link');
+        const rawImg = film.assets && film.assets.large_image;
+        let thumbUrl = parseMpExternalUrl(rawImg);
+        if (!thumbUrl && rawImg && rawImg.includes('https/')) {
+            thumbUrl = 'https://' + rawImg.split('https/')[1];
+        }
+        const filmTitle = film.details || 'Фильм';
+        const timestamps = film.timestamps;
+        const isNew = filmTitle !== lastTrackId;
+        
+        if (isNew) {
+            lastTrackId = filmTitle;
+            clearInterval(musicProgressInterval);
+            if (musicProgressContainer) musicProgressContainer.style.display = 'none';
+            document.getElementById('status-text').textContent = '🎬 ' + filmTitle;
+            
+            if (cover && link) {
+                link.href = '#';
+                link.removeAttribute('target');
+                
+                if (thumbUrl) {
+                    inactiveImg.removeAttribute('crossorigin');
+                    inactiveImg.src = thumbUrl;
+                    inactiveImg.onload = () => {
+                        inactiveImg.classList.add('visible');
+                        inactiveImg.classList.remove('hidden');
+                        activeImg.classList.remove('visible');
+                        activeImg.classList.add('hidden');
+                        const tmp = activeImg;
+                        activeImg = inactiveImg;
+                        inactiveImg = tmp;
+                        
+                        const proxied = thumbUrl.replace('https://', 'https://images.weserv.nl/?url=');
+                        const colorImg = new Image();
+                        colorImg.crossOrigin = 'anonymous';
+                        colorImg.onload = () => {
+                            try {
+                                const colorThief = new ColorThief();
+                                const color = colorThief.getColor(colorImg);
+                                document.documentElement.style.setProperty('--accent', `rgb(${color[0]}, ${color[1]}, ${color[2]})`);
+                                document.documentElement.style.setProperty('--accent-glow', `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`);
+                            } catch(e) {}
+                        };
+                        colorImg.src = proxied;
+                        
+                        if (timestamps && timestamps.start && timestamps.end) {
+                            lastTimestamps = { start: timestamps.start, end: timestamps.end };
+                            updateMusicProgress(timestamps.start, timestamps.end);
+                        }
+                    };
+                    inactiveImg.onerror = () => {
+                        cover.style.display = 'none';
+                        if (timestamps && timestamps.start && timestamps.end) {
+                            lastTimestamps = { start: timestamps.start, end: timestamps.end };
+                            updateMusicProgress(timestamps.start, timestamps.end);
+                        }
+                    };
+                    cover.style.display = 'block';
+                } else {
+                    cover.style.display = 'none';
+                    if (timestamps && timestamps.start && timestamps.end) {
+                        lastTimestamps = { start: timestamps.start, end: timestamps.end };
+                        updateMusicProgress(timestamps.start, timestamps.end);
+                    }
+                }
+            }
+            lastPlayingState = true;
+        } else {
+            if (cover) cover.style.display = thumbUrl ? 'block' : 'none';
+            if (timestamps && timestamps.start && timestamps.end) checkAndSyncTimestamps(timestamps.start, timestamps.end);
+        }
+        return;
+    }
+
+    const youtube = activities.find(a => a.type === 3 && a.name === 'YouTube');
+    if (youtube) {
+        const cover = document.getElementById('spotify-cover');
+        const link = document.getElementById('spotify-link');
+        const rawImg = youtube.assets && youtube.assets.large_image;
+        const thumbUrl = parseMpExternalUrl(rawImg);
+        const videoTitle = youtube.details || 'YouTube';
+        const channelName = youtube.state || '';
+        const timestamps = youtube.timestamps;
+        const ytKey = videoTitle + channelName;
+        const isNew = ytKey !== lastTrackId;
+        if (isNew) {
+            lastTrackId = ytKey;
+            clearInterval(musicProgressInterval);
+            if (musicProgressContainer) musicProgressContainer.style.display = 'none';
+            const displayText = channelName ? '▶ ' + channelName + ' — ' + videoTitle : '▶ ' + videoTitle;
+            document.getElementById('status-text').textContent = displayText;
+            if (cover && link) {
+                const searchQuery = encodeURIComponent((channelName ? channelName + ' ' : '') + videoTitle);
+                link.href = 'https://www.youtube.com/results?search_query=' + searchQuery;
+                link.target = '_blank';
+                if (thumbUrl) {
+                    inactiveImg.removeAttribute('crossorigin');
+                    inactiveImg.src = thumbUrl;
+                    inactiveImg.onload = () => {
+                        inactiveImg.classList.add('visible');
+                        inactiveImg.classList.remove('hidden');
+                        activeImg.classList.remove('visible');
+                        activeImg.classList.add('hidden');
+                        const tmp = activeImg;
+                        activeImg = inactiveImg;
+                        inactiveImg = tmp;
+                        const proxied = thumbUrl.replace('https://', 'https://images.weserv.nl/?url=');
+                        const colorImg = new Image();
+                        colorImg.crossOrigin = 'anonymous';
+                        colorImg.onload = () => {
+                            try {
+                                const colorThief = new ColorThief();
+                                const color = colorThief.getColor(colorImg);
+                                document.documentElement.style.setProperty('--accent', `rgb(${color[0]}, ${color[1]}, ${color[2]})`);
+                                document.documentElement.style.setProperty('--accent-glow', `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`);
+                            } catch(e) {}
+                        };
+                        colorImg.src = proxied;
+                        if (timestamps && timestamps.start && timestamps.end) {
+                            lastTimestamps = { start: timestamps.start, end: timestamps.end };
+                            updateMusicProgress(timestamps.start, timestamps.end);
+                        }
+                    };
+                    inactiveImg.onerror = () => {
+                        cover.style.display = 'none';
+                        if (timestamps && timestamps.start && timestamps.end) {
+                            lastTimestamps = { start: timestamps.start, end: timestamps.end };
+                            updateMusicProgress(timestamps.start, timestamps.end);
+                        }
+                    };
+                    cover.style.display = 'block';
+                } else {
+                    cover.style.display = 'none';
+                    if (timestamps && timestamps.start && timestamps.end) {
+                        lastTimestamps = { start: timestamps.start, end: timestamps.end };
+                        updateMusicProgress(timestamps.start, timestamps.end);
+                    }
+                }
+            }
+            lastPlayingState = true;
+        } else {
+            if (cover) cover.style.display = thumbUrl ? 'block' : 'none';
+            if (timestamps && timestamps.start && timestamps.end) checkAndSyncTimestamps(timestamps.start, timestamps.end);
+        }
+        return;
+    }
+
+    const twitch = activities.find(a => a.type === 3 && a.name === 'Twitch');
+    if (twitch) {
+        const cover = document.getElementById('spotify-cover');
+        const link = document.getElementById('spotify-link');
+        const rawImg = twitch.assets && twitch.assets.large_image;
+        const thumbUrl = parseMpExternalUrl(rawImg);
+        const streamTitle = twitch.details || 'Twitch';
+        const streamerName = twitch.state || '';
+        const twKey = streamTitle + streamerName;
+        const isNew = twKey !== lastTrackId;
+        if (isNew) {
+            lastTrackId = twKey;
+            clearInterval(musicProgressInterval);
+            if (musicProgressContainer) musicProgressContainer.style.display = 'none';
+            const displayText = streamerName ? '🟣 ' + streamerName + ' — ' + streamTitle : '🟣 ' + streamTitle;
+            document.getElementById('status-text').textContent = displayText;
+            if (cover && link) {
+                link.href = 'https://www.twitch.tv/' + (streamerName || '');
+                link.target = '_blank';
+                if (thumbUrl) {
+                    inactiveImg.removeAttribute('crossorigin');
+                    inactiveImg.src = thumbUrl;
+                    inactiveImg.onload = () => {
+                        inactiveImg.classList.add('visible');
+                        inactiveImg.classList.remove('hidden');
+                        activeImg.classList.remove('visible');
+                        activeImg.classList.add('hidden');
+                        const tmp = activeImg;
+                        activeImg = inactiveImg;
+                        inactiveImg = tmp;
+                        const proxied = thumbUrl.replace('https://', 'https://images.weserv.nl/?url=');
+                        const colorImg = new Image();
+                        colorImg.crossOrigin = 'anonymous';
+                        colorImg.onload = () => {
+                            try {
+                                const colorThief = new ColorThief();
+                                const color = colorThief.getColor(colorImg);
+                                document.documentElement.style.setProperty('--accent', `rgb(${color[0]}, ${color[1]}, ${color[2]})`);
+                                document.documentElement.style.setProperty('--accent-glow', `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`);
+                            } catch(e) {}
+                        };
+                        colorImg.src = proxied;
+                    };
+                    inactiveImg.onerror = () => { cover.style.display = 'none'; };
+                    cover.style.display = 'block';
+                } else {
+                    cover.style.display = 'none';
+                }
+            }
+            lastPlayingState = true;
+        } else {
+            if (cover) cover.style.display = thumbUrl ? 'block' : 'none';
+        }
+        return;
+    }
+
+    const game = activities.find(a => a.type === 0);
+    if(game){
+        gameName = game.name;
+        gameStartTime = game.timestamps ? game.timestamps.start : null;
+        document.getElementById('status-text').textContent = '🎮 ' + gameName;
+        if(musicBox) musicBox.style.display = 'none';
+        const cover = document.getElementById('spotify-cover');
+        if (cover) cover.style.display = 'none';
+        lastTrackId = null;
+        lastTimestamps = { start: null, end: null };
+        return;
+    } else {
+        gameStartTime = null;
+    }
+
+    const custom = activities.find(a => a.type === 4);
+    if(custom){
+        document.getElementById('status-text').textContent = custom.state || '';
+        lastPlayingState = false;
+        if(musicBox) musicBox.style.display='none';
+        const cover = document.getElementById('spotify-cover');
+        if (cover) cover.style.display = 'none';
+        lastTrackId = null;
+        lastTimestamps = { start: null, end: null };
+        return;
+    }
+
+    document.getElementById('status-text').textContent = payload.discord_status.toUpperCase();
+    lastPlayingState = false;
+    if(musicBox) musicBox.style.display='none';
+    const cover = document.getElementById('spotify-cover');
+    if (cover) cover.style.display = 'none';
+    lastTrackId = null;
+    lastTimestamps = { start: null, end: null };
+}
+
+function animateTime(el, newValue) {
+    const chars = newValue.split('');
+    let spans = el.querySelectorAll('span');
+    if (spans.length !== chars.length) {
         el.innerHTML = '';
         chars.forEach(char => {
             const span = document.createElement('span');
             span.textContent = char;
             el.appendChild(span);
         });
+        return;
     }
+    chars.forEach((char, i) => {
+        if (spans[i].textContent !== char) {
+            spans[i].textContent = char;
+            spans[i].style.animation = 'none';
+            spans[i].offsetHeight;
+            spans[i].style.animation = 'timeUp 0.25s ease';
+        }
+    });
+}
 
-    initStaticTime(musicTotalTime);
-    setInterval(getDiscordStatus, 5000);
-    getDiscordStatus();
+function initStaticTime(el) {
+    const chars = el.textContent.split('');
+    el.innerHTML = '';
+    chars.forEach(char => {
+        const span = document.createElement('span');
+        span.textContent = char;
+        el.appendChild(span);
+    });
+}
+
+initStaticTime(musicTotalTime);
+
+async function fetchDiscordStatus() {
+    try {
+        const response = await fetch(WORKER_URL + '?id=' + DISCORD_ID);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        updateDiscordStatus(data);
+    } catch (e) {
+        console.log('Error fetching status:', e);
+    }
+}
+
     </script>
 </body>
 </html>
