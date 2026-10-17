@@ -412,6 +412,7 @@
                 <h2>Links</h2>
                 <div class="links-grid">
                     <a href="https://t.me/hitmysoul" class="btn-new btn-primary"><i class="fab fa-telegram-plane"></i> Telegram</a>
+                    <a href="https://soundcloud.com/hitmysoul" class="btn-new btn-primary"><i class="fab fa-soundcloud"></i> SoundCloud</a>
                     <a href="https://discord.com/users/moshenic" class="btn-new"><i class="fab fa-discord"></i> Discord</a>
                     <a href="https://www.youtube.com/@vrosek" class="btn-new"><i class="fab fa-youtube"></i> YouTube</a>
                     <a href="https://www.twitch.tv/vrosik" class="btn-new"><i class="fab fa-twitch"></i> Twitch</a>
@@ -616,15 +617,15 @@ function addTerminalLine(html, isPrompt = false) {
 }
 
 const neofetchAscii = `
-    ___      ___      ___      ___   
-   /\__\    /\  \    /\  \    /\  \  
-  /:/  /__  /::\  \  /::\  \  /::\  \ 
- /:/__/\ \/:/\:\  \/:/\:\  \/:/\:\  
- \:\  \/:/\/::\__\/::\__\/::\__\ 
-  \::/__/:/\/:/\/__\/:/\/__\/:/\/__/ 
-   \:\  \/\::/\/__/\::/\/__/\::/\/__/ 
-    \::/__/\/__/    \/__/    \/__/    
-     \/__/                           `;
+    ___     ___     ___     ___   
+   /\\__\\   /\\  \\   /\\  \\   /\\  \\  
+  /:/  /__ /::\\  \\ /::\\  \\ /::\\  \\ 
+ /:/__/\\ \\/:/\\:\\  \\/:/\\:\\  \\/:/\\:\\  
+ \\:\\  \\/:/\\::\\__\\::\\__\\::\\__\\ 
+  \\::/__/:/\\/:/\\/__\\/:/\\/__\\/:/\\/__/ 
+   \\:\\  \\/\\::\\/__/\\::\\/__/\\::\\/__/ 
+    \\::/__/\\/__/    \\/__/    \\/__/    
+     \\/__/                            `;
 
 const commands = {
     help: () => `Available commands:<br><span class="terminal-cmd">help</span> — show this message<br><span class="terminal-cmd">whoami</span> — about me<br><span class="terminal-cmd">neofetch</span> — system info<br><span class="terminal-cmd">clear</span> — clear terminal<br><span class="terminal-cmd">matrix</span> — toggle matrix rain<br><span class="terminal-cmd">socials</span> — list social links<br><span class="terminal-cmd">age</span> — current age`,
@@ -632,7 +633,7 @@ const commands = {
     neofetch: () => `<div class="terminal-ascii">${neofetchAscii}</div>OS: vrosikOS 1.0<br>Host: Volgograd, Russia<br>Kernel: ISTJ-10.12.2009<br>Uptime: ${getAgeString()}<br>Shell: zsh<br>Resolution: ${window.innerWidth}x${window.innerHeight}<br>DE: Dark Glass<br>WM: vrosik-wm`,
     clear: () => { terminalBody.innerHTML = '<div class="terminal-input-line"><span class="terminal-prompt">$</span><input type="text" id="terminal-input" placeholder="" autocomplete="off" spellcheck="false"></div>'; document.getElementById('terminal-input').focus(); return null; },
     matrix: () => { matrixActive = !matrixActive; matrixCanvas.classList.toggle('active', matrixActive); if (matrixActive) { initMatrix(); drawMatrix(); } return 'Matrix rain toggled.'; },
-    socials: () => `Telegram: @hitmysoul<br>Discord: moshenic<br>YouTube: @vrosek<br>Twitch: vrosik<br>GitHub: vrosek`,
+    socials: () => `Telegram: @hitmysoul<br>SoundCloud: hitmysoul<br>Discord: moshenic<br>YouTube: @vrosek<br>Twitch: vrosik<br>GitHub: vrosek`,
     age: () => getAgeString()
 };
 
