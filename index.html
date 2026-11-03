@@ -218,6 +218,10 @@
         .btn-download { background: rgba(0,229,255,0.06); border-color: rgba(0,229,255,0.2); color: var(--accent); margin-top: 8px; }
         .btn-download:hover { background: rgba(0,229,255,0.12); border-color: rgba(0,229,255,0.4); color: var(--text-main); }
         .btn-back { width: max-content; padding: 10px 22px; margin-bottom: 20px; font-size: 0.8rem; }
+        .other-projects { margin-top: 40px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .other-projects h2 { margin-bottom: 14px; width: 100%; }
+        .other-projects-link { width: auto; min-width: 240px; max-width: 100%; padding: 14px 30px; margin: 0 auto; }
+        .other-projects-link i { color: var(--accent); }
         footer { width: 100%; margin-top: auto; padding-bottom: 20px; opacity: 0; transition: opacity 1s ease 1.5s; }
         body.loaded footer { opacity: 1; }
         .moments-gallery { width: 100%; overflow: hidden; position: relative; padding: 20px 0; mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent); }
@@ -433,6 +437,12 @@
                 <img src="images/project1.png" alt="Call Of Duty 2 - Scally Mod" class="project-img">
                 <p class="project-desc">Мой первый чит для Call of Duty 2. Имеет несколько хороших функций, подробная информация в readme.txt</p>
                 <a href="files/ScallyMod.rar" download="ScallyMod.rar" class="btn-new btn-download"><i class="fas fa-download"></i> Скачать</a>
+            </div>
+            <div class="other-projects">
+                <h2>Other Projects</h2>
+                <a href="https://users.playground.ru/3058753/" target="_blank" rel="noopener noreferrer" class="btn-new btn-primary other-projects-link">
+                    <i class="fas fa-gamepad"></i> Playground
+                </a>
             </div>
         </div>
     </main>
