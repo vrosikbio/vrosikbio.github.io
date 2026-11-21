@@ -771,7 +771,7 @@
       }
     }
 
-    function syncActivityProgress(timestamps, forceSync = false) {
+    function syncActivityProgress(timestamps) {
       const start = Number(timestamps && timestamps.start);
       const end = Number(timestamps && timestamps.end);
 
@@ -780,15 +780,11 @@
         return;
       }
 
-      const shouldSync = forceSync || !activityTimestamps ||
-        Math.abs(start - activityTimestamps.start) > 3000 ||
-        Math.abs(end - activityTimestamps.end) > 3000;
-
-      if (shouldSync) activityTimestamps = { start, end };
+      activityTimestamps = { start, end };
       renderActivityProgress();
 
       if (!activityProgressTimer) {
-        activityProgressTimer = setInterval(renderActivityProgress, 1000);
+        activityProgressTimer = setInterval(renderActivityProgress, 250);
       }
     }
 
@@ -1090,10 +1086,9 @@
     }
 
     function applyActivity(options) {
-      const changed = options.key !== lastActivityKey;
       setPlayerState(options.title, options.detail, options.badge, Boolean(options.paused));
       setActivityCover(options.imageUrl, options.destinationUrl, options.openInNewTab);
-      syncActivityProgress(options.timestamps, changed || Boolean(options.forceProgressSync));
+      syncActivityProgress(options.timestamps);
       lastActivityKey = options.key;
     }
 
