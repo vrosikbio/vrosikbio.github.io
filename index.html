@@ -18,6 +18,7 @@
       --text: #ececf1;
       --muted: #7e7e8a;
       --accent: #34d399;
+      --accent-glow: rgba(52, 211, 153, 0.25);
       --radius: 16px;
       --mono: 'Fira Code', Consolas, monospace;
       --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -140,7 +141,8 @@
       filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
     }
     .right-stack { display: flex; flex-direction: column; gap: 14px; }
-    .player-card { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
+    .player-card { display: flex; flex-direction: column; gap: 14px; padding: 16px 18px; }
+    .player-main { display: flex; align-items: center; gap: 14px; }
     .cover-box {
       display: block; width: 64px; height: 64px; border-radius: 11px; overflow: hidden;
       flex-shrink: 0; background: #18181f; border: 1px solid var(--border);
@@ -177,6 +179,33 @@
       display: flex; justify-content: space-between; font-family: var(--mono);
       font-size: 10px; color: var(--muted); margin-top: 4px;
     }
+
+    .lyrics-box {
+      position: relative;
+      margin-top: 4px;
+      max-height: 180px;
+      overflow: hidden;
+      padding: 0 6px;
+      border-top: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--muted);
+      mask-image: linear-gradient(to bottom, black 0%, black 78%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black 0%, black 78%, transparent 100%);
+    }
+    .lyrics-line {
+      padding: 2px 0;
+      transition: color 0.25s ease, opacity 0.25s ease, font-weight 0.25s ease;
+      opacity: 0.45;
+      text-align: center;
+    }
+    .lyrics-line.active {
+      color: var(--accent);
+      opacity: 1;
+      font-weight: 600;
+    }
+
     .stats-row { display: grid; grid-template-columns: 1.35fr 1fr 0.9fr; gap: 10px; flex: 1; }
     .stat-box {
       background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
@@ -316,6 +345,7 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
 </head>
+
 <body>
   <canvas id="starfield"></canvas>
   <div class="grain"></div>
@@ -352,20 +382,25 @@
       <div class="col-5">
         <div class="right-stack">
           <div class="card player-card">
-            <a class="cover-box" id="spotifyLink" href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer" aria-label="Open current Spotify track" style="display:none">
-              <img id="spotifyCover" alt="Spotify album cover">
-            </a>
-            <div class="player-meta">
-              <div class="player-badge" id="playerBadge">
-                <span class="eq" id="spotifyEq"><i></i><i></i><i></i></span>
-                <span id="playerBadgeText">Spotify / Activity</span>
+            <div class="player-main">
+              <a class="cover-box" id="spotifyLink" href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer" aria-label="Open current Spotify track" style="display:none">
+                <img id="spotifyCover" alt="Spotify album cover">
+              </a>
+              <div class="player-meta">
+                <div class="player-badge" id="playerBadge">
+                  <span class="eq" id="spotifyEq"><i></i><i></i><i></i></span>
+                  <span id="playerBadgeText">Spotify / Activity</span>
+                </div>
+                <div class="track-title" id="trackTitle">Checking Spotify...</div>
+                <div class="track-artist" id="trackArtist">Waiting for activity data</div>
+                <div class="prog-wrap" id="spotifyProgress" style="display:none">
+                  <div class="prog-bar"><div class="prog-fill" id="spotifyProgressFill" style="width:0%"></div></div>
+                  <div class="prog-times"><span id="spotifyCurrentTime">0:00</span><span id="spotifyDuration">0:00</span></div>
+                </div>
               </div>
-              <div class="track-title" id="trackTitle">Checking Spotify...</div>
-              <div class="track-artist" id="trackArtist">Waiting for activity data</div>
-              <div class="prog-wrap" id="spotifyProgress" style="display:none">
-                <div class="prog-bar"><div class="prog-fill" id="spotifyProgressFill" style="width:0%"></div></div>
-                <div class="prog-times"><span id="spotifyCurrentTime">0:00</span><span id="spotifyDuration">0:00</span></div>
-              </div>
+            </div>
+            <div class="lyrics-box" id="lyricsBox">
+              <div style="color: var(--muted); font-size: 12px; padding: 4px 0;">Текст появится при воспроизведении Spotify</div>
             </div>
           </div>
           <div class="stats-row">
@@ -472,7 +507,7 @@
   </audio>
 
   <script>
-    const birthDate = new Date('2009-12-10T00:00:00+03:00');
+        const birthDate = new Date('2009-12-10T00:00:00+03:00');
     const ageEl = document.getElementById('ageCounter');
     const clockEl = document.getElementById('vlgClock');
     const bdayEl = document.getElementById('bdayLeft');
@@ -654,6 +689,7 @@
 
     const DISCORD_ID = '1491053386752196722';
     const WORKER_URL = 'https://bitter-mountain-81e3.vrosik891.workers.dev/';
+    const LRCLIB_BASE = 'https://lrclib.net/api';
 
     const spotifyLink = document.getElementById('spotifyLink');
     const spotifyCover = document.getElementById('spotifyCover');
@@ -668,10 +704,20 @@
     const spotifyDuration = document.getElementById('spotifyDuration');
     const discordStatusDot = document.querySelector('.avatar-wrap .status-dot');
 
+    const lyricsBox = document.getElementById('lyricsBox');
+
     let lastActivityKey = null;
     let activityTimestamps = null;
     let activityProgressTimer = null;
     let activityRequestPending = false;
+
+    let lyricsLines = [];
+    let lyricsLineEls = [];
+    let lyricsActiveIndex = -1;
+    let lyricsIntervalId = null;
+    let lyricsFetchController = null;
+    let currentLyricsTrackKey = null;
+    let currentTrackPaused = false;
 
     function formatActivityTime(milliseconds) {
       const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
@@ -711,6 +757,10 @@
       spotifyDuration.textContent = formatActivityTime(duration);
       spotifyProgress.style.display = 'block';
 
+      if (!currentTrackPaused) {
+        syncLyricsProgress(safeElapsed / 1000);
+      }
+
       if (elapsed >= duration && activityProgressTimer) {
         clearInterval(activityProgressTimer);
         activityProgressTimer = null;
@@ -735,6 +785,193 @@
 
       if (!activityProgressTimer) {
         activityProgressTimer = setInterval(renderActivityProgress, 1000);
+      }
+    }
+
+    function parseLRC(lrcText) {
+      if (!lrcText) return [];
+      const lines = lrcText.split(/\r?\n/);
+      const result = [];
+      const timeRegex = /\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\]\s*(.*)/;
+
+      for (const line of lines) {
+        const match = line.match(timeRegex);
+        if (!match) continue;
+        const minutes = parseInt(match[1], 10);
+        const seconds = parseInt(match[2], 10);
+        const fraction = match[3] ? parseFloat('0.' + match[3]) : 0;
+        const time = minutes * 60 + seconds + fraction;
+        const text = (match[4] || '').trim();
+        if (text) {
+          result.push({ time, text });
+        }
+      }
+      result.sort((a, b) => a.time - b.time);
+      return result;
+    }
+
+    function resetLyricsUI(message = '') {
+      lyricsLines = [];
+      lyricsLineEls = [];
+      lyricsActiveIndex = -1;
+      if (lyricsIntervalId) {
+        clearInterval(lyricsIntervalId);
+        lyricsIntervalId = null;
+      }
+      lyricsBox.innerHTML = '';
+      lyricsBox.scrollTop = 0;
+      if (message) {
+        const div = document.createElement('div');
+        div.style.color = 'var(--muted)';
+        div.style.fontSize = '12px';
+        div.style.padding = '4px 0';
+        div.textContent = message;
+        lyricsBox.appendChild(div);
+      }
+    }
+
+    function renderLyricsLines(lines) {
+      lyricsBox.innerHTML = '';
+      lyricsLineEls = [];
+      if (!lines.length) {
+        resetLyricsUI('Текст не найден для этого трека');
+        return;
+      }
+
+      lines.forEach((line, idx) => {
+        const div = document.createElement('div');
+        div.className = 'lyrics-line';
+        div.textContent = line.text;
+        div.dataset.index = idx;
+        lyricsBox.appendChild(div);
+        lyricsLineEls.push(div);
+      });
+      lyricsActiveIndex = -1;
+    }
+
+    function setActiveLyricLine(index) {
+      if (index === lyricsActiveIndex) return;
+      lyricsActiveIndex = index;
+
+      lyricsLineEls.forEach((el, i) => {
+        el.classList.toggle('active', i === index);
+      });
+
+      if (index >= 0 && lyricsLineEls[index]) {
+        const activeEl = lyricsLineEls[index];
+        const boxRect = lyricsBox.getBoundingClientRect();
+        const elRect = activeEl.getBoundingClientRect();
+        const target = elRect.top - boxRect.top + lyricsBox.scrollTop;
+        lyricsBox.scrollTo({ top: target, behavior: 'smooth' });
+      }
+    }
+
+    function syncLyricsProgress(elapsedSeconds) {
+      if (!lyricsLines.length) return;
+      let activeIdx = -1;
+      for (let i = 0; i < lyricsLines.length; i++) {
+        if (lyricsLines[i].time <= elapsedSeconds) {
+          activeIdx = i;
+        } else {
+          break;
+        }
+      }
+      if (activeIdx !== lyricsActiveIndex) {
+        setActiveLyricLine(activeIdx);
+      }
+    }
+
+    function stopLyricsSync() {
+      if (lyricsIntervalId) {
+        clearInterval(lyricsIntervalId);
+        lyricsIntervalId = null;
+      }
+    }
+
+    function startLyricsSync(trackKey) {
+      stopLyricsSync();
+      if (!lyricsLines.length) return;
+      if (currentTrackPaused) return;
+      if (!activityTimestamps || !lastActivityKey || lastActivityKey !== trackKey) return;
+
+      lyricsIntervalId = setInterval(() => {
+        if (currentTrackPaused || !activityTimestamps) return;
+        const elapsed = (Date.now() - activityTimestamps.start) / 1000;
+        syncLyricsProgress(elapsed);
+      }, 250);
+    }
+
+    async function fetchLyrics(trackName, artistName, durationMs) {
+      const requestKey = currentLyricsTrackKey;
+
+      if (lyricsFetchController) {
+        lyricsFetchController.abort();
+      }
+      lyricsFetchController = new AbortController();
+      const signal = lyricsFetchController.signal;
+
+      try {
+        let url = `${LRCLIB_BASE}/get?track_name=${encodeURIComponent(trackName)}&artist_name=${encodeURIComponent(artistName)}`;
+        if (durationMs) {
+          url += `&duration=${Math.round(durationMs / 1000)}`;
+        }
+
+        let response = await fetch(url, { signal });
+        let data = null;
+
+        if (response.ok) {
+          data = await response.json();
+        }
+
+        if (!data || (!data.syncedLyrics && !data.plainLyrics)) {
+          const searchUrl = `${LRCLIB_BASE}/search?q=${encodeURIComponent(trackName + ' ' + artistName)}`;
+          const searchResponse = await fetch(searchUrl, { signal });
+          if (searchResponse.ok) {
+            const results = await searchResponse.json();
+            if (Array.isArray(results) && results.length > 0) {
+              data = results.find(r => r.syncedLyrics) || results[0];
+            }
+          }
+        }
+
+        if (requestKey !== currentLyricsTrackKey) return;
+
+        if (!data) {
+          resetLyricsUI('Текст не найден для этого трека');
+          return;
+        }
+
+        if (data.instrumental) {
+          resetLyricsUI('Инструментал — текста нет');
+          return;
+        }
+
+        if (data.syncedLyrics) {
+          const parsed = parseLRC(data.syncedLyrics);
+          if (parsed.length) {
+            renderLyricsLines(parsed);
+            lyricsLines = parsed;
+            startLyricsSync(currentLyricsTrackKey);
+            return;
+          }
+        }
+
+        if (data.plainLyrics) {
+          const plainLines = data.plainLyrics.split(/\r?\n/).filter(l => l.trim()).map(l => l.trim());
+          const fakeLines = plainLines.map((text, i) => ({ time: i * 3, text }));
+          renderLyricsLines(fakeLines);
+          lyricsLines = fakeLines;
+          lyricsLineEls.forEach(el => el.style.opacity = '1');
+          return;
+        }
+
+        resetLyricsUI('Текст не найден для этого трека');
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.warn('Lyrics fetch failed:', err);
+        if (requestKey === currentLyricsTrackKey) {
+          resetLyricsUI('Не удалось загрузить текст');
+        }
       }
     }
 
@@ -833,6 +1070,8 @@
       setActivityCover(null);
       clearActivityProgress();
       lastActivityKey = null;
+      currentTrackPaused = true;
+      resetLyricsUI('Нет активного трека Spotify');
     }
 
     function setDiscordPresenceStatus(status) {
@@ -865,9 +1104,21 @@
         const spotify = payload.spotify;
         const trackId = spotify.track_id || `${spotify.song || ''}-${spotify.artist || ''}`;
         const isPlaying = Boolean(spotify.timestamps && spotify.timestamps.start && spotify.timestamps.end);
+        const trackKey = `spotify:${trackId}`;
+
+        currentTrackPaused = !isPlaying;
+
+        if (trackKey !== currentLyricsTrackKey) {
+          currentLyricsTrackKey = trackKey;
+          resetLyricsUI('Загрузка текста...');
+          const durationMs = spotify.timestamps
+            ? (spotify.timestamps.end - spotify.timestamps.start)
+            : 0;
+          fetchLyrics(spotify.song || '', spotify.artist || '', durationMs);
+        }
 
         applyActivity({
-          key: `spotify:${trackId}`,
+          key: trackKey,
           title: spotify.song || 'Unknown track',
           detail: spotify.artist || 'Unknown artist',
           badge: isPlaying ? 'Spotify / Listening' : 'Spotify / Paused',
@@ -879,8 +1130,18 @@
           openInNewTab: true,
           timestamps: spotify.timestamps
         });
+
+        if (!isPlaying) {
+          stopLyricsSync();
+        } else if (lyricsLines.length) {
+          startLyricsSync(trackKey);
+        }
         return;
       }
+
+      currentLyricsTrackKey = null;
+      currentTrackPaused = true;
+      resetLyricsUI('Текст доступен только для Spotify');
 
       const film = activities.find(activity => activity.type === 3 && activity.name === 'Фильм');
       if (film) {
