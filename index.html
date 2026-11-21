@@ -205,6 +205,15 @@
       opacity: 1;
       font-weight: 600;
     }
+    .lyrics-box.scrollable {
+      overflow-y: auto;
+      padding-bottom: 32px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+    }
+    .lyrics-box.scrollable .lyrics-line {
+      opacity: 1;
+    }
 
     .stats-row { display: grid; grid-template-columns: 1.35fr 1fr 0.9fr; gap: 10px; flex: 1; }
     .stat-box {
@@ -819,6 +828,7 @@
         lyricsIntervalId = null;
       }
       lyricsBox.innerHTML = '';
+      lyricsBox.classList.remove('scrollable');
       lyricsBox.scrollTop = 0;
       if (message) {
         const div = document.createElement('div');
@@ -830,8 +840,9 @@
       }
     }
 
-    function renderLyricsLines(lines) {
+    function renderLyricsLines(lines, scrollable = false) {
       lyricsBox.innerHTML = '';
+      lyricsBox.classList.toggle('scrollable', scrollable);
       lyricsLineEls = [];
       if (!lines.length) {
         resetLyricsUI('Текст не найден для этого трека');
@@ -958,10 +969,8 @@
 
         if (data.plainLyrics) {
           const plainLines = data.plainLyrics.split(/\r?\n/).filter(l => l.trim()).map(l => l.trim());
-          const fakeLines = plainLines.map((text, i) => ({ time: i * 3, text }));
-          renderLyricsLines(fakeLines);
-          lyricsLines = fakeLines;
-          lyricsLineEls.forEach(el => el.style.opacity = '1');
+          renderLyricsLines(plainLines.map(text => ({ text })), true);
+          lyricsLines = [];
           return;
         }
 
