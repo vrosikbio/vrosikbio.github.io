@@ -345,7 +345,6 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
 </head>
-
 <body>
   <canvas id="starfield"></canvas>
   <div class="grain"></div>
@@ -399,9 +398,7 @@
                 </div>
               </div>
             </div>
-            <div class="lyrics-box" id="lyricsBox">
-              <div style="color: var(--muted); font-size: 12px; padding: 4px 0;">Текст появится при воспроизведении Spotify</div>
-            </div>
+            <div class="lyrics-box" id="lyricsBox" style="display:none;"></div>
           </div>
           <div class="stats-row">
             <div class="stat-box">
@@ -505,9 +502,8 @@
   <audio id="bgAudio" loop>
     <source src="music/background.mp3" type="audio/mpeg">
   </audio>
-
-  <script>
-        const birthDate = new Date('2009-12-10T00:00:00+03:00');
+    <script>
+    const birthDate = new Date('2009-12-10T00:00:00+03:00');
     const ageEl = document.getElementById('ageCounter');
     const clockEl = document.getElementById('vlgClock');
     const bdayEl = document.getElementById('bdayLeft');
@@ -718,6 +714,14 @@
     let lyricsFetchController = null;
     let currentLyricsTrackKey = null;
     let currentTrackPaused = false;
+
+    function showLyricsBox() {
+      lyricsBox.style.display = 'block';
+    }
+
+    function hideLyricsBox() {
+      lyricsBox.style.display = 'none';
+    }
 
     function formatActivityTime(milliseconds) {
       const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
@@ -1070,8 +1074,11 @@
       setActivityCover(null);
       clearActivityProgress();
       lastActivityKey = null;
+      currentLyricsTrackKey = null;
       currentTrackPaused = true;
-      resetLyricsUI('Нет активного трека Spotify');
+      stopLyricsSync();
+      hideLyricsBox();
+      resetLyricsUI('');
     }
 
     function setDiscordPresenceStatus(status) {
@@ -1101,6 +1108,7 @@
       setDiscordPresenceStatus(payload.discord_status);
 
       if (payload.listening_to_spotify && payload.spotify) {
+        showLyricsBox();
         const spotify = payload.spotify;
         const trackId = spotify.track_id || `${spotify.song || ''}-${spotify.artist || ''}`;
         const isPlaying = Boolean(spotify.timestamps && spotify.timestamps.start && spotify.timestamps.end);
@@ -1141,7 +1149,9 @@
 
       currentLyricsTrackKey = null;
       currentTrackPaused = true;
-      resetLyricsUI('Текст доступен только для Spotify');
+      stopLyricsSync();
+      hideLyricsBox();
+      resetLyricsUI('');
 
       const film = activities.find(activity => activity.type === 3 && activity.name === 'Фильм');
       if (film) {
@@ -1215,7 +1225,7 @@
         const customText = custom.state || 'Custom status';
         const emojiName = custom.emoji && custom.emoji.name ? custom.emoji.name : '';
         const displayText = emojiName ? `${emojiName} ${customText}` : customText;
-        setPlayerState(displayText, 'Discord custom status', 'Discord / Custom Status', false);
+        setPlayerState(displayText, 'Discord custom status', 'Discord / Custom Status', true);
         setActivityCover(null);
         clearActivityProgress();
         lastActivityKey = `custom:${displayText}`;
