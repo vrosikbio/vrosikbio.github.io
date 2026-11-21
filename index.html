@@ -1,1298 +1,1004 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>vrosik | digital presence</title>
-    <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --bg-dark: #070709;
-            --surface: rgba(25, 25, 30, 0.45);
-            --surface-hover: rgba(40, 40, 48, 0.65);
-            --border: rgba(255, 255, 255, 0.06);
-            --border-hover: rgba(255, 255, 255, 0.12);
-            --text-main: #f5f5f7;
-            --text-muted: #868690;
-            --text-dim: #5a5a64;
-            --accent: #00e5ff;
-            --accent-glow: rgba(0, 229, 255, 0.2);
-            --accent-secondary: #ff6b9d;
-            --success: #23a55a;
-            --warning: #f0b232;
-            --danger: #f23f43;
-            --glass: rgba(255, 255, 255, 0.03);
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-        ::selection { background: var(--accent-glow); color: var(--accent); }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-x: hidden;
-            position: relative;
-            cursor: none;
-            transition: background 0.6s ease, color 0.6s ease;
-        }
-        #particles-canvas {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -2; pointer-events: none;
-        }
-        #matrix-canvas {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 9998; pointer-events: none;
-            opacity: 0; transition: opacity 0.5s ease;
-        }
-        #matrix-canvas.active { opacity: 0.12; }
-        .cursor {
-            position: fixed; width: 8px; height: 8px;
-            background: #fff; border-radius: 50%;
-            pointer-events: none; z-index: 99999;
-            transform: translate(-50%, -50%);
-            transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s;
-            mix-blend-mode: difference;
-        }
-        .cursor.hovering { width: 40px; height: 40px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.4); }
-        .cursor.click { transform: translate(-50%, -50%) scale(0.8); }
-        #bg-video {
-            position: fixed; top: 50%; left: 50%;
-            min-width: 100%; min-height: 100%;
-            z-index: -3; transform: translate(-50%, -50%);
-            object-fit: cover;
-            filter: brightness(0.12) contrast(1.3) saturate(0.8);
-            opacity: 0.7;
-        }
-        body::before {
-            content: "";
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 20% 30%, rgba(0,229,255,0.04), transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,107,157,0.03), transparent 40%), radial-gradient(circle at 50% 0%, rgba(0,229,255,0.03), transparent 50%);
-            z-index: -1; pointer-events: none;
-        }
-        #preloader {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 9999;
-            display: flex; justify-content: center; align-items: center; flex-direction: column;
-            transition: opacity 1s cubic-bezier(0.8, 0, 0.2, 1);
-        }
-        .loader-text {
-            font-family: 'JetBrains Mono', monospace; color: var(--text-muted);
-            font-size: 0.8rem; letter-spacing: 4px; margin-bottom: 20px; text-transform: uppercase;
-        }
-        .loader-bar {
-            width: 180px; height: 1px; background: rgba(255,255,255,0.08);
-            position: relative; overflow: hidden; border-radius: 1px;
-        }
-        .loader-bar::after {
-            content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 0%;
-            background: var(--accent); animation: load 2.2s cubic-bezier(0.8, 0, 0.2, 1) forwards;
-            box-shadow: 0 0 10px var(--accent);
-        }
-        #continue-btn {
-            display: none; padding: 14px 36px; background: transparent;
-            color: var(--text-main); border: 1px solid var(--border);
-            font-family: 'Inter', sans-serif; font-size: 0.85rem; letter-spacing: 3px;
-            border-radius: 100px; cursor: none; transition: all 0.4s ease;
-            backdrop-filter: blur(10px); animation: fadeIn 1s ease forwards; text-transform: uppercase;
-        }
-        #continue-btn:hover { background: var(--text-main); color: #000; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255,255,255,0.08); }
-        @keyframes load { 0% {width: 0%;} 100% {width: 100%;} }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        main {
-            width: 90%; max-width: 680px; margin: 60px auto 40px; padding: 50px 40px;
-            background: var(--surface); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-            border: 1px solid var(--border); border-radius: 24px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 0 1px rgba(255,255,255,0.02);
-            text-align: center; opacity: 0; transform: translateY(30px);
-            transition: opacity 1.2s ease, transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-            position: relative;
-        }
-        body.loaded main { opacity: 1; transform: translateY(0); }
-        .anim-item { opacity: 0; transform: translateY(25px); transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        body.loaded .anim-item { opacity: 1; transform: translateY(0); }
-        .d-1 { transition-delay: 0.15s; } .d-2 { transition-delay: 0.25s; } .d-3 { transition-delay: 0.35s; }
-        .d-4 { transition-delay: 0.45s; } .d-5 { transition-delay: 0.55s; } .d-6 { transition-delay: 0.65s; } .d-7 { transition-delay: 0.75s; }
-        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        .reveal.visible { opacity: 1; transform: translateY(0); }
-        .system-status {
-            margin-bottom: 28px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .eye-icon { width: 42px; height: 26px; position: relative; }
-        .eye-icon svg { width: 100%; height: 100%; display: block; }
-        .eye-pupil { animation: eyeLook 4s ease-in-out infinite; }
-        @keyframes eyeLook {
-            0%, 8% { transform: translateX(-6px); }
-            20%, 38% { transform: translateX(6px); }
-            50%, 58% { transform: translateX(0px); }
-            70%, 88% { transform: translateX(-6px); }
-            100% { transform: translateX(-6px); }
-        }
-        .profile-wrapper { position: relative; width: 130px; height: 130px; margin: 0 auto 25px; }
-        .profile-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); position: relative; z-index: 2; filter: grayscale(25%) contrast(1.1); transition: all 0.5s ease; }
-        .profile-wrapper:hover .profile-pic { filter: grayscale(0%) contrast(1.05); transform: scale(1.02); }
-        .profile-glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; height: 140px; border-radius: 50%; background: var(--accent); filter: blur(30px); opacity: 0.12; z-index: 1; transition: all 0.6s ease; }
-        .profile-wrapper:hover .profile-glow { opacity: 0.25; filter: blur(35px); }
-        .profile-ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 142px; height: 142px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.06); z-index: 3; pointer-events: none; }
-        .profile-ring::after { content: ''; position: absolute; top: -2px; left: 50%; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); transform: translateX(-50%); }
-        .main-title { font-size: 2.4rem; font-weight: 300; letter-spacing: -1px; color: var(--text-main); margin-bottom: 8px; line-height: 1.2; }
-        .main-title strong { font-weight: 700; }
-        .name-highlight { position: relative; display: inline-block; padding: 0.08em 0.42em 0.14em; margin-left: 0.1em; border-radius: 0.45em; color: #e8e8e8; isolation: isolate; text-shadow: 0 1px 2px rgba(0,0,0,0.3); overflow: hidden; }
-        .name-highlight::before { content: ""; position: absolute; inset: -0.06em; border-radius: inherit; background: linear-gradient(135deg, rgba(0,229,255,0.15), rgba(255,107,157,0.1)), url("images/background2.png") center/cover no-repeat; opacity: 0.6; filter: saturate(0.5) brightness(0.6) contrast(0.9); z-index: -2; }
-        .name-highlight::after { content: ""; position: absolute; inset: -0.06em; border-radius: inherit; background-image: radial-gradient(rgba(255,255,255,0.08) 0.7px, transparent 0.8px), radial-gradient(rgba(0,0,0,0.1) 0.7px, transparent 0.8px); background-position: 0 0, 2px 2px; background-size: 6px 6px; opacity: 0.35; mix-blend-mode: soft-light; z-index: -1; }
-        .subtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 28px; font-weight: 400; letter-spacing: 0.5px; }
-        #discord-status { display: inline-flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.35); padding: 14px 24px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 32px; min-width: 280px; font-family: 'Inter', sans-serif; transition: all 0.3s ease; }
-        #discord-status:hover { border-color: var(--border-hover); background: rgba(0,0,0,0.4); }
-        .status-header { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; transition: all 0.3s ease; }
-        .status-online { background: var(--success); box-shadow: 0 0 10px rgba(35,165,90,0.5); }
-        .status-idle { background: var(--warning); box-shadow: 0 0 10px rgba(240,178,50,0.5); }
-        .status-dnd { background: var(--danger); box-shadow: 0 0 10px rgba(242,63,67,0.5); }
-        .status-offline { background: #80848e; }
-        #status-text { white-space: normal; text-align: center; line-height: 1.3; word-break: break-word; font-size: 0.85rem; color: var(--text-main); }
-        .music-progress-container { display: none; width: 100%; padding-top: 10px; }
-        .music-info { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-dim); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
-        .music-progress-bar { width: 100%; height: 3px; background: rgba(255,255,255,0.05); position: relative; overflow: hidden; border-radius: 3px; }
-        .music-progress-fill { position: absolute; top: 0; left: 0; height: 100%; background: var(--accent); transition: width 0.3s linear; box-shadow: 0 0 8px var(--accent-glow); border-radius: 3px; }
-        #spotify-cover { margin-bottom: 12px; }
-        #spotify-link { display: inline-block; border-radius: 14px; overflow: hidden; transition: transform 0.4s ease, box-shadow 0.4s ease; cursor: none; }
-        #spotify-link:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
-        .spotify-img-wrapper { position: relative; width: 160px; height: 160px; }
-        .spotify-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 14px; transition: opacity 0.6s ease; }
-        .spotify-img.hidden { opacity: 0; }
-        .spotify-img.visible { opacity: 1; }
-        section { margin-bottom: 40px; }
-        h2 { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 18px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        h2::before, h2::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent); max-width: 60px; }
-        .typing-container { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-muted); line-height: 1.7; display: flex; flex-direction: column; align-items: center; min-height: 60px; }
-        #typewriter-text { color: var(--text-main); min-height: 1.5em; }
-        .cursor-blink { animation: blink 1s step-end infinite; color: var(--accent); }
-        @keyframes blink { 50% { opacity: 0; } }
-        .quote { margin-top: 12px; font-style: italic; opacity: 0.5; font-size: 0.8rem; position: relative; padding: 0 20px; }
-        .quote::before { content: '"'; position: absolute; left: 0; top: -5px; font-size: 1.5rem; color: var(--accent); opacity: 0.3; font-family: Georgia, serif; }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 10px; }
-        .stat-card { background: var(--glass); border: 1px solid var(--border); border-radius: 14px; padding: 16px 10px; transition: all 0.3s ease; }
-        .stat-card:hover { border-color: var(--border-hover); background: rgba(255,255,255,0.05); transform: translateY(-2px); }
-        .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
-        .stat-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
-        .skills-list { display: flex; flex-direction: column; gap: 14px; text-align: left; }
-        .skill-item { display: flex; flex-direction: column; gap: 6px; }
-        .skill-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
-        .skill-name { color: var(--text-main); font-weight: 500; display: flex; align-items: center; gap: 8px; }
-        .skill-name i { color: var(--text-dim); font-size: 0.9rem; width: 18px; text-align: center; }
-        .skill-percent { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-size: 0.75rem; }
-        .skill-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; position: relative; }
-        .skill-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-secondary)); border-radius: 4px; width: 0%; transition: width 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); position: relative; }
-        .skill-fill::after { content: ''; position: absolute; right: 0; top: 0; width: 8px; height: 100%; background: rgba(255,255,255,0.3); filter: blur(4px); }
-        .links-grid { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        .btn-new { display: flex; align-items: center; justify-content: center; gap: 12px; background: var(--glass); border: 1px solid var(--border); color: var(--text-main); padding: 14px 20px; border-radius: 14px; text-decoration: none; font-weight: 400; font-size: 0.9rem; transition: all 0.35s ease; cursor: none; width: 100%; position: relative; overflow: hidden; }
-        .btn-new::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent); transition: left 0.5s ease; }
-        .btn-new:hover::before { left: 100%; }
-        .btn-new i { font-size: 1.1rem; color: var(--text-dim); transition: all 0.3s ease; width: 20px; text-align: center; }
-        .btn-new:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
-        .btn-new:hover i { color: var(--accent); transform: scale(1.1); }
-        .btn-primary { background: linear-gradient(135deg, rgba(0,229,255,0.08), rgba(255,107,157,0.05)); border-color: rgba(0,229,255,0.15); }
-        .btn-primary:hover { border-color: rgba(0,229,255,0.3); box-shadow: 0 8px 24px rgba(0,229,255,0.08); }
-        #main-view, #projects-view { width: 100%; transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        .project-card { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 18px; padding: 28px; display: flex; flex-direction: column; align-items: center; gap: 16px; margin-top: 15px; transition: all 0.3s ease; }
-        .project-card:hover { border-color: var(--border-hover); transform: translateY(-3px); box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
-        .project-card h3 { font-size: 1.2rem; color: var(--text-main); font-weight: 600; text-align: center; }
-        .project-tags { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        .project-tag { font-size: 0.65rem; padding: 4px 10px; background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.15); border-radius: 100px; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
-        .project-img { max-width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); filter: grayscale(20%); transition: all 0.4s ease; }
-        .project-img:hover { filter: grayscale(0%); transform: scale(1.02); }
-        .project-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; font-family: 'JetBrains Mono', monospace; text-align: center; }
-        .btn-download { background: rgba(0,229,255,0.06); border-color: rgba(0,229,255,0.2); color: var(--accent); margin-top: 8px; }
-        .btn-download:hover { background: rgba(0,229,255,0.12); border-color: rgba(0,229,255,0.4); color: var(--text-main); }
-        .btn-back { width: max-content; padding: 10px 22px; margin-bottom: 20px; font-size: 0.8rem; }
-        .other-projects { margin-top: 40px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .other-projects h2 { margin-bottom: 14px; width: 100%; }
-        .other-projects-link { width: auto; min-width: 240px; max-width: 100%; padding: 14px 30px; margin: 0 auto; }
-        .other-projects-link i { color: var(--accent); }
-        footer { width: 100%; margin-top: auto; padding-bottom: 20px; opacity: 0; transition: opacity 1s ease 1.5s; }
-        body.loaded footer { opacity: 1; }
-        .moments-gallery { width: 100%; overflow: hidden; position: relative; padding: 20px 0; mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent); }
-        .moments-container { display: flex; width: max-content; }
-        .moments-gallery:hover .moments-container { animation-play-state: paused; }
-        .moment { width: 150px; height: 150px; margin: 0 6px; transition: all 0.4s ease; flex-shrink: 0; border-radius: 12px; overflow: hidden; cursor: none; position: relative; }
-        .moment img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(50%); transition: all 0.5s ease; }
-        .moment:hover { transform: scale(1.08); z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .moment:hover img { filter: grayscale(0%); }
-        @keyframes scrollGallery { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        #lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); z-index: 99990; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; cursor: none; }
-        #lightbox.active { display: flex; opacity: 1; }
-        #lightbox img { max-width: 85%; max-height: 85%; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); transform: scale(0.9); transition: transform 0.3s ease; }
-        #lightbox.active img { transform: scale(1); }
-        #lightbox-close { position: absolute; top: 30px; right: 30px; color: var(--text-muted); font-size: 1.5rem; cursor: none; transition: color 0.3s ease; }
-        #lightbox-close:hover { color: var(--text-main); }
-        .music-control { position: fixed; bottom: 30px; right: 30px; width: 48px; height: 48px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; z-index: 100; transition: all 0.3s ease; opacity: 0; transform: translateY(20px); backdrop-filter: blur(10px); font-size: 1rem; }
-        body.loaded .music-control { opacity: 1; transform: translateY(0); transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 1.5s; }
-        .music-control:hover { color: var(--accent); border-color: rgba(0,229,255,0.3); transform: scale(1.1) !important; box-shadow: 0 0 20px var(--accent-glow); }
-        #terminal { position: fixed; bottom: 90px; right: 30px; width: 380px; max-width: calc(100vw - 60px); background: rgba(5,5,8,0.95); border: 1px solid var(--border); border-radius: 16px; z-index: 99; display: none; flex-direction: column; overflow: hidden; backdrop-filter: blur(20px); box-shadow: 0 20px 50px rgba(0,0,0,0.6); opacity: 0; transform: translateY(10px); transition: all 0.3s ease; }
-        #terminal.active { display: flex; opacity: 1; transform: translateY(0); }
-        .terminal-header { padding: 12px 16px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-dim); cursor: move; user-select: none; }
-        #terminal.dragging { transition: none; }
-        .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
-        .terminal-dot.red { background: var(--danger); }
-        .terminal-dot.yellow { background: var(--warning); }
-        .terminal-dot.green { background: var(--success); }
-        .terminal-body { padding: 14px 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--text-muted); max-height: 280px; overflow-y: auto; line-height: 1.6; }
-        .terminal-line { margin-bottom: 4px; }
-        .terminal-prompt { color: var(--accent); }
-        .terminal-input-line { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
-        #terminal-input { background: transparent; border: none; outline: none; color: var(--text-main); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; flex: 1; caret-color: var(--accent); }
-        .terminal-cmd { color: var(--accent); }
-        .terminal-output { color: var(--text-muted); }
-        .terminal-ascii { color: var(--accent); font-size: 0.65rem; line-height: 1.4; white-space: pre; margin: 8px 0; }
-        .pony { margin: 15px 0; opacity: 0.7; transition: opacity 0.3s ease; }
-        .pony:hover { opacity: 1; }
-        .pony img { max-width: 80px; }
-        .pony-bottom { position: fixed; bottom: 0; left: 20px; opacity: 0.5; pointer-events: none; z-index: 5; }
-        .pony-bottom img { max-width: 100px; }
-        .time { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
-        #space-hint {
-            position: fixed; top: 12%; left: 50%; transform: translate(-50%, -10px);
-            z-index: 1; text-align: center; pointer-events: none;
-            font-family: 'JetBrains Mono', monospace; color: rgba(255,255,255,0.12);
-            opacity: 0; transition: opacity 2s ease, transform 3s ease;
-            text-shadow: 0 0 20px rgba(0,229,255,0.15);
-        }
-        #space-hint.visible { opacity: 1; transform: translate(-50%, 0); animation: hintFloat 6s ease-in-out infinite; }
-        #space-hint .hint-main { font-size: 1.6rem; letter-spacing: 6px; text-transform: uppercase; }
-        #space-hint .hint-sub { font-size: 0.75rem; letter-spacing: 4px; margin-top: 10px; color: rgba(255,255,255,0.08); }
-        @keyframes hintFloat { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -12px); } }
-        @keyframes timeUp { from { transform: translateY(6px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @media (max-width: 600px) {
-            main { width: 94%; padding: 35px 20px; margin: 30px auto 20px; }
-            .cursor { display: none !important; }
-            * { cursor: auto !important; }
-            .main-title { font-size: 1.8rem; }
-            .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-            .stat-card { padding: 12px 6px; }
-            .stat-value { font-size: 0.9rem; }
-            #discord-status { min-width: unset; width: 100%; padding: 12px 14px; }
-            #status-text { max-width: 100%; font-size: 0.8rem; }
-            .spotify-img-wrapper { width: 130px; height: 130px; }
-            #terminal { right: 10px; width: calc(100vw - 20px); }
-            .pony-bottom { display: none; }
-            h2::before, h2::after { max-width: 30px; }
-        }
-    </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vrosik | digital presence</title>
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070709;
+      --surface: rgba(16, 16, 20, 0.72);
+      --surface-hover: rgba(24, 24, 30, 0.85);
+      --border: rgba(255, 255, 255, 0.07);
+      --border-strong: rgba(255, 255, 255, 0.15);
+      --text: #ececf1;
+      --muted: #7e7e8a;
+      --accent: #34d399;
+      --radius: 16px;
+      --mono: 'Fira Code', Consolas, monospace;
+      --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    #starfield {
+      position: fixed; inset: 0; z-index: -2; pointer-events: none;
+    }
+    .grain {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .wrapper { max-width: 920px; margin: 0 auto; padding: 44px 20px 90px; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 18px; font-family: var(--mono); font-size: 12px; color: var(--muted);
+    }
+    .term-trigger {
+      background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+      font-family: var(--mono); font-size: 12px; padding: 6px 12px; border-radius: 10px;
+      cursor: pointer; backdrop-filter: blur(12px);
+      transition: border-color 0.2s ease, color 0.2s ease;
+    }
+    .term-trigger:hover { border-color: var(--border-strong); color: var(--text); }
+    .term-trigger kbd {
+      background: rgba(255, 255, 255, 0.08); padding: 1px 6px; border-radius: 5px;
+      color: var(--text); margin: 0 2px;
+    }
+    .bento { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 22px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      position: relative; transition: border-color 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .card:hover { border-color: rgba(255, 255, 255, 0.13); }
+    .label {
+      font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--muted); margin-bottom: 14px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .col-7 { grid-column: span 7; }
+    .col-5 { grid-column: span 5; }
+    .col-4 { grid-column: span 4; }
+    .col-8 { grid-column: span 8; }
+    .col-12 { grid-column: span 12; }
+
+    .profile-card { display: flex; flex-direction: column; justify-content: space-between; }
+    .profile-head { display: flex; align-items: center; gap: 18px; }
+    .avatar-wrap { position: relative; width: 78px; height: 78px; flex-shrink: 0; }
+    .avatar-wrap img {
+      width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+      border: 1px solid var(--border-strong);
+    }
+    .status-dot {
+      position: absolute; bottom: 3px; right: 3px; width: 13px; height: 13px;
+      border-radius: 50%; background: var(--muted); border: 2px solid #101014;
+    }
+    .status-dot.online { background: var(--accent); }
+    .status-dot.idle { background: #fbbf24; }
+    .status-dot.dnd { background: #f87171; }
+    .status-dot.offline { background: var(--muted); }
+    .title-line {
+      font-size: 23px; font-weight: 500; letter-spacing: -0.02em;
+      display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    }
+    .nick-pill {
+      position: relative; isolation: isolate; overflow: hidden;
+      background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-strong);
+      padding: 2px 11px; border-radius: 9px; font-weight: 700; display: inline-block;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+      transform: rotate(-1.5deg); transition: transform 0.2s ease;
+    }
+    .nick-pill::before {
+      content: ""; position: absolute; inset: 0; z-index: -2; border-radius: inherit;
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.12), rgba(255, 255, 255, 0.04)),
+                  url("images/background2.png") center / cover no-repeat;
+      opacity: 0.6; filter: saturate(0.5) brightness(0.6) contrast(0.9);
+    }
+    .nick-pill::after {
+      content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+      background-image: radial-gradient(rgba(255,255,255,0.08) 0.7px, transparent 0.8px),
+                        radial-gradient(rgba(0,0,0,0.1) 0.7px, transparent 0.8px);
+      background-position: 0 0, 2px 2px; background-size: 6px 6px;
+      opacity: 0.35; mix-blend-mode: soft-light; pointer-events: none;
+    }
+    .profile-card:hover .nick-pill { transform: rotate(0deg); }
+    .sub-tag {
+      font-family: var(--mono); font-size: 12px; color: var(--muted);
+      margin-top: 5px; display: flex; align-items: center; gap: 8px;
+    }
+    .sub-tag span {
+      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border);
+      padding: 1px 7px; border-radius: 6px;
+    }
+    .bio-box { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .bio-meta {
+      font-family: var(--mono); font-size: 12px; color: #c8c8d2; word-spacing: -1px;
+    }
+    .quote-row {
+      margin-top: 8px; font-family: var(--mono); font-size: 12px; color: var(--muted);
+      font-style: italic; min-height: 18px;
+    }
+    .cursor {
+      display: inline-block; width: 6px; height: 13px; background: var(--muted);
+      vertical-align: middle; margin-left: 3px; animation: blink 1s steps(2, start) infinite;
+    }
+    @keyframes blink { to { visibility: hidden; } }
+    .pony-sticker {
+      position: absolute; right: 14px; bottom: -8px; width: 62px;
+      pointer-events: none; opacity: 0.92;
+      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
+    }
+    .right-stack { display: flex; flex-direction: column; gap: 14px; }
+    .player-card { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
+    .cover-box {
+      display: block; width: 64px; height: 64px; border-radius: 11px; overflow: hidden;
+      flex-shrink: 0; background: #18181f; border: 1px solid var(--border);
+    }
+    .cover-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .eq.paused { opacity: 0.28; animation-play-state: paused; }
+    .player-badge.paused { color: var(--muted); }
+    .player-card .player-meta { overflow: hidden; }
+    .track-title, .track-artist { min-width: 0; }
+    .player-meta { flex: 1; min-width: 0; }
+    .player-badge {
+      display: flex; align-items: center; gap: 6px; font-family: var(--mono);
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--accent); margin-bottom: 3px;
+    }
+    .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 10px; }
+    .eq i { width: 2px; background: var(--accent); animation: eqAnim 0.8s ease-in-out infinite alternate; }
+    .eq i:nth-child(1) { height: 4px; animation-delay: 0.1s; }
+    .eq i:nth-child(2) { height: 10px; animation-delay: 0.3s; }
+    .eq i:nth-child(3) { height: 6px; animation-delay: 0.2s; }
+    @keyframes eqAnim { from { height: 3px; } to { height: 10px; } }
+    .track-title {
+      font-size: 13.5px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .track-artist {
+      font-size: 12px; color: var(--muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .prog-wrap { margin-top: 8px; }
+    .prog-bar { height: 3px; background: rgba(255, 255, 255, 0.08); border-radius: 3px; overflow: hidden; }
+    .prog-fill { height: 100%; width: 32%; background: var(--text); border-radius: 3px; transition: width 0.5s linear; }
+    .prog-times {
+      display: flex; justify-content: space-between; font-family: var(--mono);
+      font-size: 10px; color: var(--muted); margin-top: 4px;
+    }
+    .stats-row { display: grid; grid-template-columns: 1.35fr 1fr 0.9fr; gap: 10px; flex: 1; }
+    .stat-box {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 14px 12px; display: flex; flex-direction: column; justify-content: center;
+      backdrop-filter: blur(16px);
+    }
+    .stat-val {
+      font-family: var(--mono); font-size: 13.5px; font-weight: 600;
+      font-variant-numeric: tabular-nums; color: var(--text); letter-spacing: -0.02em;
+    }
+    .stat-lbl {
+      font-family: var(--mono); font-size: 10px; color: var(--muted);
+      text-transform: uppercase; margin-top: 4px; letter-spacing: 0.05em;
+    }
+    .tags-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      font-family: var(--mono); font-size: 12px; padding: 6px 11px; border-radius: 9px;
+      background: rgba(255, 255, 255, 0.035); border: 1px solid var(--border);
+      color: #d4d4dc; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .chip small { color: var(--muted); font-size: 10.5px; }
+
+    .links-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+    .link-pill {
+      text-decoration: none; color: var(--text); font-size: 13px; font-weight: 500;
+      padding: 7px 13px; border-radius: 10px; background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 6px;
+      transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .link-pill span {
+      color: var(--muted); font-family: var(--mono); font-size: 11px;
+      transition: transform 0.2s ease;
+    }
+    .link-pill:hover { background: var(--surface-hover); border-color: var(--border-strong); transform: translateY(-1px); }
+    .link-pill:hover span { transform: translate(2px, -2px); color: var(--text); }
+
+    .project-grid { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: center; }
+    .project-thumb {
+      width: 100%; height: 135px; border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border); background: #121217;
+    }
+    .project-thumb img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform 0.35s ease;
+    }
+    .card:hover .project-thumb img { transform: scale(1.03); }
+    .project-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .project-title { font-size: 17px; font-weight: 600; }
+    .project-desc { font-size: 13.5px; color: #a8a8b4; margin: 8px 0 14px; }
+    .project-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .btn-row { display: flex; gap: 8px; }
+    .btn {
+      font-family: var(--mono); font-size: 12px; text-decoration: none;
+      padding: 7px 14px; border-radius: 9px; border: 1px solid var(--border-strong);
+      color: var(--text); background: rgba(255, 255, 255, 0.06);
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .btn:hover { background: rgba(255, 255, 255, 0.13); border-color: rgba(255, 255, 255, 0.28); }
+    .btn-ghost { background: transparent; border-color: var(--border); color: var(--muted); }
+    .btn-ghost:hover { color: var(--text); }
+
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 8px; }
+    .gallery-item {
+      aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden;
+      border: 1px solid var(--border); cursor: pointer; background: #111115;
+    }
+    .gallery-item.hidden-extra { display: none; }
+    .gallery-item img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      filter: brightness(0.82) contrast(1.03);
+      transition: filter 0.25s ease, transform 0.3s ease;
+    }
+    .gallery-item:hover img { filter: brightness(1); transform: scale(1.04); }
+    .gallery-toggle {
+      margin-top: 12px; width: 100%; background: rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--border); color: var(--muted); font-family: var(--mono);
+      font-size: 12px; padding: 9px; border-radius: 10px; cursor: pointer;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    .gallery-toggle:hover { color: var(--text); border-color: var(--border-strong); }
+
+    .term-backdrop {
+      position: fixed; inset: 0; background: rgba(4, 4, 6, 0.72); backdrop-filter: blur(10px);
+      display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px;
+    }
+    .term-backdrop.open { display: flex; }
+    .term-window {
+      width: 100%; max-width: 580px; background: rgba(14, 14, 18, 0.94);
+      border: 1px solid var(--border-strong); border-radius: 16px; padding: 18px 20px;
+      font-family: var(--mono); font-size: 13px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+    }
+    .term-header {
+      display: flex; justify-content: space-between; color: var(--muted); font-size: 11.5px;
+      padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
+    .term-body {
+      max-height: 260px; overflow-y: auto; color: #d4d4dc;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .term-input-line { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    .term-input-line span { color: var(--accent); }
+    .term-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-family: var(--mono); font-size: 13px;
+    }
+
+    .lightbox {
+      position: fixed; inset: 0; background: rgba(5, 5, 8, 0.88);
+      backdrop-filter: blur(12px); display: none; align-items: center;
+      justify-content: center; z-index: 60; padding: 24px; cursor: zoom-out;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-width: 90vw; max-height: 86vh; border-radius: 12px;
+      border: 1px solid var(--border-strong);
+    }
+
+    .corner-pony {
+      position: fixed; bottom: 10px; left: 14px; width: 58px;
+      pointer-events: none; z-index: 20; opacity: 0.85;
+    }
+    .sound-btn {
+      position: fixed; bottom: 18px; right: 18px; width: 38px; height: 38px;
+      border-radius: 50%; background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); display: grid; place-items: center; cursor: pointer;
+      backdrop-filter: blur(12px); z-index: 20;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    .sound-btn:hover { color: var(--text); border-color: var(--border-strong); }
+
+    @media (max-width: 780px) {
+      .col-7, .col-5, .col-4, .col-8 { grid-column: span 12; }
+      .project-grid { grid-template-columns: 1fr; }
+      .project-thumb { height: 180px; }
+      .pony-sticker { width: 48px; right: 10px; }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
 </head>
 <body>
-    <canvas id="particles-canvas"></canvas>
-    <canvas id="matrix-canvas"></canvas>
-    <video autoplay muted loop playsinline id="bg-video"><source src="images/background.MP4" type="video/mp4"></video>
-    <div id="preloader">
-        <div class="loader-content" id="loader-init">
-            <div class="loader-text">INITIALIZING SYSTEM</div>
-            <div class="loader-bar"></div>
-        </div>
-        <button id="continue-btn">ENTER</button>
+  <canvas id="starfield"></canvas>
+  <div class="grain"></div>
+
+  <div class="wrapper">
+    <div class="topbar">
+      <span>vrosik // digital presence</span>
+      <button class="term-trigger" id="openTermBtn">press <kbd>`</kbd> for zsh</button>
     </div>
-    <div class="cursor"></div>
-    <div id="space-hint">
-        <div class="hint-main">Press ~</div>
-        <div class="hint-sub">↑ ↑ ↓ ↓ ← → ← → B A</div>
+
+    <div class="bento">
+      <div class="card profile-card col-7">
+        <div class="profile-head">
+          <div class="avatar-wrap">
+            <img src="images/profile.jpg" alt="avatar">
+            <div class="status-dot online"></div>
+          </div>
+          <div>
+            <div class="title-line">Hello, I am <span class="nick-pill">vrosik</span></div>
+            <div class="sub-tag">
+              <span>x64dbg</span>
+              <span>IDA Pro</span>
+              <span>ISTJ</span>
+            </div>
+          </div>
+        </div>
+        <div class="bio-box">
+          <div class="bio-meta">10.12.2009 • City: Volgograd • Type: ISTJ • valid eblan</div>
+          <div class="quote-row"><span id="typedQuote"></span><span class="cursor"></span></div>
+        </div>
+        <img class="pony-sticker" src="images/ponya2.gif" alt="">
+      </div>
+
+      <div class="col-5">
+        <div class="right-stack">
+          <div class="card player-card">
+            <a class="cover-box" id="spotifyLink" href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer" aria-label="Open current Spotify track" style="display:none">
+              <img id="spotifyCover" alt="Spotify album cover">
+            </a>
+            <div class="player-meta">
+              <div class="player-badge" id="playerBadge">
+                <span class="eq" id="spotifyEq"><i></i><i></i><i></i></span>
+                <span id="playerBadgeText">Spotify / Activity</span>
+              </div>
+              <div class="track-title" id="trackTitle">Checking Spotify...</div>
+              <div class="track-artist" id="trackArtist">Waiting for activity data</div>
+              <div class="prog-wrap" id="spotifyProgress" style="display:none">
+                <div class="prog-bar"><div class="prog-fill" id="spotifyProgressFill" style="width:0%"></div></div>
+                <div class="prog-times"><span id="spotifyCurrentTime">0:00</span><span id="spotifyDuration">0:00</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="stat-val" id="ageCounter">16.94924700</div>
+              <div class="stat-lbl">Age</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val" id="vlgClock">--:--:--</div>
+              <div class="stat-lbl">Volgograd</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val" id="bdayLeft">--d</div>
+              <div class="stat-lbl">To B-Day</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card col-12">
+        <div class="label">Stack &amp; Focus <span>01</span></div>
+        <div class="tags-wrap">
+          <span class="chip">C++ <small>mem / internal</small></span>
+          <span class="chip">Game Modding</span>
+          <span class="chip">Reverse Engineering</span>
+          <span class="chip">HTML / CSS</span>
+          <span class="chip">Dota 2 <small>1000-7</small></span>
+        </div>
+      </div>
+
+      <div class="card col-5">
+        <div class="label">Elsewhere <span>02</span></div>
+        <div class="links-wrap">
+          <a class="link-pill" href="https://t.me/hitmysoul" target="_blank" rel="noopener">Telegram <span>↗</span></a>
+          <a class="link-pill" href="https://github.com/vrosek/vrosek.github.io" target="_blank" rel="noopener">GitHub <span>↗</span></a>
+          <a class="link-pill" href="https://discord.com/users/moshenic" target="_blank" rel="noopener">Discord <span>↗</span></a>
+          <a class="link-pill" href="https://steamcommunity.com/profiles/76561199501156798" target="_blank" rel="noopener">Steam <span>↗</span></a>
+          <a class="link-pill" href="https://open.spotify.com/user/313ifveoymwrbkw3e2yvji2vhadi" target="_blank" rel="noopener">Spotify <span>↗</span></a>
+          <a class="link-pill" href="https://soundcloud.com/hitmysoul" target="_blank" rel="noopener">SoundCloud <span>↗</span></a>
+          <a class="link-pill" href="https://youtube.com/@vrosek" target="_blank" rel="noopener">YouTube <span>↗</span></a>
+          <a class="link-pill" href="https://twitch.tv/vrosik" target="_blank" rel="noopener">Twitch <span>↗</span></a>
+          <a class="link-pill" href="https://ru.pinterest.com/knife891/_profile/" target="_blank" rel="noopener">Pinterest <span>↗</span></a>
+        </div>
+      </div>
+
+      <div class="card col-7">
+        <div class="label">Featured Release <span>03</span></div>
+        <div class="project-grid">
+          <div class="project-thumb"><img src="images/project1.jpg" alt="Profile Image"></div>
+          <div>
+            <div class="project-head">
+              <div class="project-title">Ghost Exile cheat</div>
+            </div>
+            <div class="tags-wrap" style="margin-top:8px">
+              <span class="chip">C++</span>
+              <span class="chip">Reverse Engineering</span>
+              <span class="chip">Game Hack</span>
+              <span class="chip">dnSpy</span>
+            </div>
+            <div class="project-desc">Чит для Ghost Exile, функции в readme</div>
+            <div class="project-actions">
+              <div class="btn-row">
+                <a class="btn" href="files/geCheat.zip" download>Скачать</a>
+                <a class="btn btn-ghost" href="#">Other: PlayGround ↗</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card col-12">
+        <div class="label">Archive<span id="galleryCount">27 </span></div>
+        <div class="gallery-grid" id="galleryGrid"></div>
+        <button class="gallery-toggle" id="toggleGalleryBtn">Показать все фото (27)</button>
+      </div>
     </div>
-    <div id="lightbox">
-        <div id="lightbox-close"><i class="fas fa-times"></i></div>
-        <img src="" alt="Gallery" id="lightbox-img">
+  </div>
+
+  <div class="term-backdrop" id="termBackdrop">
+    <div class="term-window">
+      <div class="term-header">
+        <span>vrosik@terminal ~ zsh</span>
+        <span>[`] or [ESC] to hide</span>
+      </div>
+      <div class="term-body" id="termOutput">
+        <div>Welcome to vrosik terminal v1.0</div>
+        <div>Type help for available commands.</div>
+      </div>
+      <div class="term-input-line">
+        <span>$</span>
+        <input class="term-input" id="termInput" type="text" autocomplete="off" spellcheck="false">
+      </div>
     </div>
-    <div id="terminal">
-        <div class="terminal-header">
-            <div class="terminal-dot red"></div>
-            <div class="terminal-dot yellow"></div>
-            <div class="terminal-dot green"></div>
-            <span style="margin-left: auto;">vrosik@terminal ~ zsh</span>
-        </div>
-        <div class="terminal-body" id="terminal-body">
-            <div class="terminal-line">Welcome to vrosik terminal v1.0</div>
-            <div class="terminal-line">Type <span class="terminal-cmd">help</span> for available commands.</div>
-            <div class="terminal-line">Press <span class="terminal-cmd">`</span> (backtick) to toggle.</div>
-            <div class="terminal-input-line">
-                <span class="terminal-prompt">$</span>
-                <input type="text" id="terminal-input" placeholder="" autocomplete="off" spellcheck="false">
-            </div>
-        </div>
-    </div>
-    <main class="anim-item d-1" data-tilt data-tilt-max="2" data-tilt-speed="1000" data-tilt-glare data-tilt-max-glare="0.05">
-        <div id="main-view">
-            <header>
-                <div class="system-status anim-item d-2">
-                    <div class="eye-icon">
-                        <svg viewBox="0 0 42 26" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 13C1 13 9 3 21 3C33 3 41 13 41 13C41 13 33 23 21 23C9 23 1 13 1 13Z" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
-                            <g class="eye-pupil">
-                                <circle cx="21" cy="13" r="6" fill="var(--accent)" opacity="0.15"/>
-                                <circle cx="21" cy="13" r="3.5" fill="var(--accent)"/>
-                            </g>
-                        </svg>
-                    </div>
-                </div>
-                <div class="profile-wrapper anim-item d-3">
-                    <div class="profile-glow"></div>
-                    <div class="profile-ring"></div>
-                    <img src="/images/profile.jpg" alt="vrosik" class="profile-pic">
-                </div>
-                <h1 class="main-title anim-item d-3">Hello, I am <strong class="name-highlight">vrosik</strong></h1>
-                <p class="subtitle anim-item d-3">x64dbg</p>
-                <div id="discord-status" class="anim-item d-4">
-                    <div id="spotify-cover" style="display:none;">
-                        <div id="spotify-link">
-                            <div class="spotify-img-wrapper">
-                                <img class="spotify-img img-a" src="" alt="cover">
-                                <img class="spotify-img img-b" src="" alt="cover">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="status-header">
-                        <div class="status-dot"></div>
-                        <span id="status-text">CONNECTING...</span>
-                    </div>
-                    <div class="music-progress-container">
-                        <div class="music-info">
-                            <span id="music-current-time" class="time"></span>
-                            <span id="music-total-time" class="time">0:00</span>
-                        </div>
-                        <div class="music-progress-bar">
-                            <div class="music-progress-fill"></div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-            <section class="anim-item d-5 reveal">
-                <h2>Live Stats</h2>
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-value" id="age-stat">--</div><div class="stat-label">Age</div></div>
-                    <div class="stat-card"><div class="stat-value" id="time-stat">--:--</div><div class="stat-label">Volgograd</div></div>
-                    <div class="stat-card"><div class="stat-value" id="bday-stat">--</div><div class="stat-label">To B-Day</div></div>
-                </div>
-            </section>
-            <section class="anim-item d-5 reveal">
-                <h2>About</h2>
-                <div class="typing-container">
-                    <p id="typewriter-text"></p><span class="cursor-blink">|</span>
-                    <p class="quote">Your eyes are so red, it's so cute</p>
-                </div>
-            </section>
-            <div class="pony anim-item d-5"><img src="/images/fluttershy.gif" alt="pony"></div>
-            <section class="anim-item d-6 reveal">
-                <h2>Skills</h2>
-                <div class="skills-list">
-                    <div class="skill-item">
-                        <div class="skill-header"><span class="skill-name"><i class="fab fa-steam"></i> Dota 2</span><span class="skill-percent">1000-7</span></div>
-                        <div class="skill-bar"><div class="skill-fill" data-width="100"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <div class="skill-header"><span class="skill-name"><i class="fab fa-html5"></i> HTML / CSS</span><span class="skill-percent">60%</span></div>
-                        <div class="skill-bar"><div class="skill-fill" data-width="60"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <div class="skill-header"><span class="skill-name"><i class="fas fa-gamepad"></i> Game Modding</span><span class="skill-percent">80%</span></div>
-                        <div class="skill-bar"><div class="skill-fill" data-width="80"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <div class="skill-header"><span class="skill-name"><i class="fab fa-cuttlefish"></i> C++</span><span class="skill-percent">50%</span></div>
-                        <div class="skill-bar"><div class="skill-fill" data-width="50"></div></div>
-                    </div>
-                </div>
-            </section>
-            <section class="anim-item d-7 reveal">
-                <h2>Links</h2>
-                <div class="links-grid">
-                    <a href="https://t.me/hitmysoul" class="btn-new btn-primary"><i class="fab fa-telegram-plane"></i> Telegram</a>
-                    <a href="https://soundcloud.com/hitmysoul" class="btn-new btn-primary"><i class="fab fa-soundcloud"></i> SoundCloud</a>
-                    <a href="https://discord.com/users/moshenic" class="btn-new"><i class="fab fa-discord"></i> Discord</a>
-                    <a href="https://www.youtube.com/@vrosek" class="btn-new"><i class="fab fa-youtube"></i> YouTube</a>
-                    <a href="https://www.twitch.tv/vrosik" class="btn-new"><i class="fab fa-twitch"></i> Twitch</a>
-                    <a href="https://ru.pinterest.com/knife891/_profile/" class="btn-new"><i class="fab fa-pinterest"></i> Pinterest</a>
-                    <a href="https://steamcommunity.com/profiles/76561199501156798" class="btn-new"><i class="fab fa-steam"></i> Steam</a>
-                    <a href="https://github.com/vrosek/vrosek.github.io" class="btn-new"><i class="fab fa-github"></i> GitHub</a>
-                    <a href="https://open.spotify.com/user/313ifveoymwrbkw3e2yvji2vhadi" class="btn-new"><i class="fab fa-spotify"></i> Spotify</a>
-                    <a href="#" id="open-projects-btn" class="btn-new" style="margin-top: 10px; border-color: rgba(255,255,255,0.15);"><i class="fas fa-folder-open"></i> My Projects</a>
-                </div>
-            </section>
-        </div>
-        <div id="projects-view" style="display: none; opacity: 0; transform: translateY(20px);">
-            <a href="#" id="back-btn" class="btn-new btn-back"><i class="fas fa-arrow-left"></i> Back</a>
-            <h2>My Projects</h2>
-            <div class="project-card">
-                <h3>Call Of Duty 2 — Scally Mod</h3>
-                <div class="project-tags"><span class="project-tag">C++</span><span class="project-tag">Reverse Engineering</span><span class="project-tag">Game Hack</span></div>
-                <img src="images/project1.png" alt="Call Of Duty 2 - Scally Mod" class="project-img">
-                <p class="project-desc">Мой первый чит для Call of Duty 2. Имеет несколько хороших функций, подробная информация в readme.txt</p>
-                <a href="files/ScallyMod.rar" download="ScallyMod.rar" class="btn-new btn-download"><i class="fas fa-download"></i> Скачать</a>
-            </div>
-            <div class="other-projects">
-                <h2>Other Projects</h2>
-                <a href="https://users.playground.ru/3058753/" target="_blank" rel="noopener noreferrer" class="btn-new btn-primary other-projects-link">
-                    <i class="fas fa-gamepad"></i> Playground
-                </a>
-            </div>
-        </div>
-    </main>
-    <footer>
-        <div class="moments-gallery">
-            <div class="moments-container" id="moments-container">
-                <div class="moment"><img src="/images/sun1.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun2.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun3.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun4.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun5.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun6.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun7.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun8.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun9.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun10.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun13.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun14.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun15.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun16.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun17.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun18.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun19.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun20.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun21.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun22.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun23.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun24.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun26.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun31.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun32.jpg" alt="Gallery" loading="lazy"></div>
-                <div class="moment"><img src="/images/sun33.jpg" alt="Gallery" loading="lazy"></div>
-            </div>
-        </div>
-    </footer>
-    <audio id="bgMusic" loop><source src="/music/background.mp3" type="audio/mpeg"></audio>
-    <div class="music-control" id="musicToggle"><i class="fas fa-volume-mute"></i></div>
-    <div class="pony-bottom"><img src="/images/ponya2.gif" alt="pony"></div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
-    <script>
-const particlesCanvas = document.getElementById('particles-canvas');
-const pCtx = particlesCanvas.getContext('2d');
-let particles = [];
-let mouseX = 0, mouseY = 0;
+  </div>
 
-function resizeParticles() {
-    particlesCanvas.width = window.innerWidth;
-    particlesCanvas.height = window.innerHeight;
-}
-resizeParticles();
-window.addEventListener('resize', resizeParticles);
+  <div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
 
-class Particle {
-    constructor() {
-        this.x = Math.random() * particlesCanvas.width;
-        this.y = Math.random() * particlesCanvas.height;
-        this.size = Math.random() * 2 + 0.5;
-        this.speedX = (Math.random() - 0.5) * 0.3;
-        this.speedY = (Math.random() - 0.5) * 0.3;
-        this.opacity = Math.random() * 0.5 + 0.1;
+  <img class="corner-pony" src="images/ponya2.gif" alt="">
+  <button class="sound-btn" id="soundBtn">🔇</button>
+  <audio id="bgAudio" loop>
+    <source src="music/background.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const birthDate = new Date('2009-12-10T00:00:00+03:00');
+    const ageEl = document.getElementById('ageCounter');
+    const clockEl = document.getElementById('vlgClock');
+    const bdayEl = document.getElementById('bdayLeft');
+
+    function updateLiveStats() {
+      const now = new Date();
+      const ageYears = (now - birthDate) / (365.2425 * 24 * 60 * 60 * 1000);
+      ageEl.textContent = ageYears.toFixed(8);
+      clockEl.textContent = new Intl.DateTimeFormat('ru-RU', {
+        timeZone: 'Europe/Volgograd',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      }).format(now);
+
+      const year = now.getFullYear();
+      let nextBday = new Date(`${year}-12-10T00:00:00+03:00`);
+      if (now >= nextBday) {
+        nextBday = new Date(`${year + 1}-12-10T00:00:00+03:00`);
+      }
+      const diffDays = Math.ceil((nextBday - now) / (1000 * 60 * 60 * 24));
+      bdayEl.textContent = (diffDays === 365 || diffDays === 0) ? 'TODAY' : `${diffDays}d`;
+      requestAnimationFrame(updateLiveStats);
     }
-    update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        if (this.x < 0) this.x = particlesCanvas.width;
-        if (this.x > particlesCanvas.width) this.x = 0;
-        if (this.y < 0) this.y = particlesCanvas.height;
-        if (this.y > particlesCanvas.height) this.y = 0;
-        const dx = mouseX - this.x;
-        const dy = mouseY - this.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist < 150) {
-            this.x -= dx * 0.01;
-            this.y -= dy * 0.01;
-        }
+    requestAnimationFrame(updateLiveStats);
+
+    const quoteText = "Your eyes are so red, it's so cute";
+    const quoteTarget = document.getElementById('typedQuote');
+    let qIdx = 0;
+    function typeQuote() {
+      if (qIdx <= quoteText.length) {
+        quoteTarget.textContent = quoteText.slice(0, qIdx);
+        qIdx++;
+        setTimeout(typeQuote, 55);
+      }
     }
-    draw() {
-        pCtx.fillStyle = `rgba(0, 229, 255, ${this.opacity})`;
-        pCtx.beginPath();
-        pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        pCtx.fill();
-    }
-}
+    typeQuote();
 
-for (let i = 0; i < 60; i++) particles.push(new Particle());
+    const sunIndices = [
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+      13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+      23, 24, 26, 31, 32, 33
+    ];
+    const galleryGrid = document.getElementById('galleryGrid');
+    const toggleBtn = document.getElementById('toggleGalleryBtn');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const VISIBLE_INIT = 7;
+    let expanded = false;
 
-setTimeout(() => {
-    const spaceHint = document.getElementById('space-hint');
-    if (spaceHint) spaceHint.classList.add('visible');
-}, 3000);
+    document.getElementById('galleryCount').textContent = `${sunIndices.length} shots`;
+    toggleBtn.textContent = `Показать все фото (${sunIndices.length})`;
 
-function animateParticles() {
-    pCtx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
-    particles.forEach(p => { p.update(); p.draw(); });
-    for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-            const dx = particles[i].x - particles[j].x;
-            const dy = particles[i].y - particles[j].y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < 120) {
-                pCtx.strokeStyle = `rgba(0, 229, 255, ${0.08 * (1 - dist/120)})`;
-                pCtx.lineWidth = 0.5;
-                pCtx.beginPath();
-                pCtx.moveTo(particles[i].x, particles[i].y);
-                pCtx.lineTo(particles[j].x, particles[j].y);
-                pCtx.stroke();
-            }
-        }
-    }
-    requestAnimationFrame(animateParticles);
-}
-animateParticles();
-
-const matrixCanvas = document.getElementById('matrix-canvas');
-const mCtx = matrixCanvas.getContext('2d');
-let matrixActive = false;
-let matrixChars = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789";
-let matrixDrops = [];
-
-function initMatrix() {
-    matrixCanvas.width = window.innerWidth;
-    matrixCanvas.height = window.innerHeight;
-    const cols = Math.floor(matrixCanvas.width / 14);
-    matrixDrops = [];
-    for (let i = 0; i < cols; i++) matrixDrops.push(Math.random() * -100);
-}
-initMatrix();
-window.addEventListener('resize', initMatrix);
-
-function drawMatrix() {
-    if (!matrixActive) return;
-    mCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-    mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
-    mCtx.fillStyle = '#0F0';
-    mCtx.font = '14px monospace';
-    for (let i = 0; i < matrixDrops.length; i++) {
-        const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-        mCtx.fillText(char, i * 14, matrixDrops[i] * 14);
-        if (matrixDrops[i] * 14 > matrixCanvas.height && Math.random() > 0.975) matrixDrops[i] = 0;
-        matrixDrops[i]++;
-    }
-    requestAnimationFrame(drawMatrix);
-}
-
-let konamiCode = [];
-const konamiSequence = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
-document.addEventListener('keydown', (e) => {
-    konamiCode.push(e.key);
-    konamiCode = konamiCode.slice(-10);
-    if (konamiCode.join(',') === konamiSequence.join(',')) {
-        matrixActive = !matrixActive;
-        matrixCanvas.classList.toggle('active', matrixActive);
-        if (matrixActive) { initMatrix(); drawMatrix(); }
-    }
-});
-
-const terminal = document.getElementById('terminal');
-const terminalBody = document.getElementById('terminal-body');
-const terminalInput = document.getElementById('terminal-input');
-let terminalOpen = false;
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === '`' || e.key === 'ё' || e.key === '~') {
-        e.preventDefault();
-        terminalOpen = !terminalOpen;
-        terminal.classList.toggle('active', terminalOpen);
-        if (terminalOpen) setTimeout(() => terminalInput.focus(), 100);
-    }
-    if (e.key === 'Escape' && terminalOpen) {
-        terminalOpen = false;
-        terminal.classList.remove('active');
-    }
-});
-
-function addTerminalLine(html, isPrompt = false) {
-    const div = document.createElement('div');
-    div.className = 'terminal-line';
-    div.innerHTML = html;
-    const inputLine = terminalBody.querySelector('.terminal-input-line');
-    terminalBody.insertBefore(div, inputLine);
-    terminalBody.scrollTop = terminalBody.scrollHeight;
-}
-
-const neofetchAscii = `
-    ___     ___     ___     ___   
-   /\\__\\   /\\  \\   /\\  \\   /\\  \\  
-  /:/  /__ /::\\  \\ /::\\  \\ /::\\  \\ 
- /:/__/\\ \\/:/\\:\\  \\/:/\\:\\  \\/:/\\:\\  
- \\:\\  \\/:/\\::\\__\\::\\__\\::\\__\\ 
-  \\::/__/:/\\/:/\\/__\\/:/\\/__\\/:/\\/__/ 
-   \\:\\  \\/\\::\\/__/\\::\\/__/\\::\\/__/ 
-    \\::/__/\\/__/    \\/__/    \\/__/    
-     \\/__/                            `;
-
-const commands = {
-    help: () => `Available commands:<br><span class="terminal-cmd">help</span> — show this message<br><span class="terminal-cmd">whoami</span> — about me<br><span class="terminal-cmd">neofetch</span> — system info<br><span class="terminal-cmd">clear</span> — clear terminal<br><span class="terminal-cmd">matrix</span> — toggle matrix rain<br><span class="terminal-cmd">socials</span> — list social links<br><span class="terminal-cmd">age</span> — current age`,
-    whoami: () => `vrosik - 16 y.o. reverse engineer & modder from Volgograd, Russia.<br>ISTJ personality type. Likes dota, coding and old games.`,
-    neofetch: () => `<div class="terminal-ascii">${neofetchAscii}</div>OS: vrosikOS 1.0<br>Host: Volgograd, Russia<br>Kernel: ISTJ-10.12.2009<br>Uptime: ${getAgeString()}<br>Shell: zsh<br>Resolution: ${window.innerWidth}x${window.innerHeight}<br>DE: Dark Glass<br>WM: vrosik-wm`,
-    clear: () => { terminalBody.innerHTML = '<div class="terminal-input-line"><span class="terminal-prompt">$</span><input type="text" id="terminal-input" placeholder="" autocomplete="off" spellcheck="false"></div>'; document.getElementById('terminal-input').focus(); return null; },
-    matrix: () => { matrixActive = !matrixActive; matrixCanvas.classList.toggle('active', matrixActive); if (matrixActive) { initMatrix(); drawMatrix(); } return 'Matrix rain toggled.'; },
-    socials: () => `Telegram: @hitmysoul<br>SoundCloud: hitmysoul<br>Discord: moshenic<br>YouTube: @vrosek<br>Twitch: vrosik<br>GitHub: vrosek`,
-    age: () => getAgeString()
-};
-
-function getAgeString() {
-    const birth = new Date('2009-12-10T00:00:00');
-    const now = new Date();
-    const diff = now - birth;
-    const years = Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
-    const days = Math.floor((diff % (365.25 * 24 * 60 * 60 * 1000)) / (24 * 60 * 60 * 1000));
-    return `${years} years, ${days} days`;
-}
-
-terminalInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const cmd = terminalInput.value.trim().toLowerCase();
-        addTerminalLine(`<span class="terminal-prompt">$</span> ${terminalInput.value}`);
-        if (commands[cmd]) {
-            const result = commands[cmd]();
-            if (result !== null) addTerminalLine(result);
-        } else if (cmd) {
-            addTerminalLine(`<span style="color:var(--danger)">Command not found:</span> ${cmd}`);
-        }
-        terminalInput.value = '';
-    }
-});
-
-const terminalHeader = document.querySelector('.terminal-header');
-let terminalDragging = false;
-let terminalDragOffsetX = 0;
-let terminalDragOffsetY = 0;
-
-function startTerminalDrag(clientX, clientY) {
-    terminalDragging = true;
-    const rect = terminal.getBoundingClientRect();
-    terminalDragOffsetX = clientX - rect.left;
-    terminalDragOffsetY = clientY - rect.top;
-    terminal.style.left = rect.left + 'px';
-    terminal.style.top = rect.top + 'px';
-    terminal.style.right = 'auto';
-    terminal.style.bottom = 'auto';
-    terminal.classList.add('dragging');
-}
-
-function moveTerminalDrag(clientX, clientY) {
-    if (!terminalDragging) return;
-    const width = terminal.offsetWidth;
-    const height = terminal.offsetHeight;
-    let newLeft = clientX - terminalDragOffsetX;
-    let newTop = clientY - terminalDragOffsetY;
-    newLeft = Math.min(Math.max(newLeft, 0), window.innerWidth - width);
-    newTop = Math.min(Math.max(newTop, 0), window.innerHeight - height);
-    terminal.style.left = newLeft + 'px';
-    terminal.style.top = newTop + 'px';
-}
-
-function endTerminalDrag() {
-    terminalDragging = false;
-    terminal.classList.remove('dragging');
-}
-
-terminalHeader.addEventListener('mousedown', (e) => {
-    startTerminalDrag(e.clientX, e.clientY);
-});
-document.addEventListener('mousemove', (e) => {
-    moveTerminalDrag(e.clientX, e.clientY);
-});
-document.addEventListener('mouseup', endTerminalDrag);
-
-terminalHeader.addEventListener('touchstart', (e) => {
-    const touch = e.touches[0];
-    startTerminalDrag(touch.clientX, touch.clientY);
-}, { passive: true });
-document.addEventListener('touchmove', (e) => {
-    if (!terminalDragging) return;
-    const touch = e.touches[0];
-    moveTerminalDrag(touch.clientX, touch.clientY);
-}, { passive: true });
-document.addEventListener('touchend', endTerminalDrag);
-
-function updateStats() {
-    const birth = new Date('2009-12-10T00:00:00+03:00');
-    const now = new Date();
-    const diff = now - birth;
-    const years = (diff / (365.25 * 24 * 60 * 60 * 1000)).toFixed(9);
-    document.getElementById('age-stat').textContent = years;
-
-    const volgogradTime = new Date().toLocaleTimeString('ru-RU', { timeZone: 'Europe/Volgograd', hour: '2-digit', minute: '2-digit' });
-    document.getElementById('time-stat').textContent = volgogradTime;
-
-    const nextBday = new Date(now.getFullYear(), 11, 10);
-    if (now > nextBday) nextBday.setFullYear(now.getFullYear() + 1);
-    const daysToBday = Math.ceil((nextBday - now) / (24 * 60 * 60 * 1000));
-    document.getElementById('bday-stat').textContent = daysToBday;
-}
-setInterval(updateStats, 100);
-updateStats();
-
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            const fills = entry.target.querySelectorAll('.skill-fill');
-            fills.forEach(fill => {
-                fill.style.width = fill.dataset.width + '%';
-            });
-        }
+    sunIndices.forEach((num, idx) => {
+      const item = document.createElement('div');
+      item.className = 'gallery-item' + (idx >= VISIBLE_INIT ? ' hidden-extra' : '');
+      const src = `images/sun${num}.jpg`;
+      item.innerHTML = `<img src="${src}" loading="lazy" alt="frame ${num}">`;
+      item.addEventListener('click', () => {
+        lightboxImg.src = src;
+        lightbox.classList.add('open');
+      });
+      galleryGrid.appendChild(item);
     });
-}, { threshold: 0.1 });
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-const lightbox = document.getElementById('lightbox');
-const lightboxImg = document.getElementById('lightbox-img');
-const lightboxClose = document.getElementById('lightbox-close');
+    toggleBtn.addEventListener('click', () => {
+      expanded = !expanded;
+      galleryGrid.querySelectorAll('.gallery-item').forEach((el, idx) => {
+        if (idx < VISIBLE_INIT) return;
+        el.classList.toggle('hidden-extra', !expanded);
+      });
+      toggleBtn.textContent = expanded
+        ? 'Свернуть архив'
+        : `Показать все фото (${sunIndices.length})`;
+    });
 
-document.addEventListener('click', (e) => {
-    const moment = e.target.closest('.moment');
-    if (moment) {
-        lightboxImg.src = moment.querySelector('img').src;
-        lightbox.classList.add('active');
+    lightbox.addEventListener('click', () => lightbox.classList.remove('open'));
+
+    const termBackdrop = document.getElementById('termBackdrop');
+    const termInput = document.getElementById('termInput');
+    const termOutput = document.getElementById('termOutput');
+
+    function toggleTerm(forceState) {
+      const willOpen = typeof forceState === 'boolean'
+        ? forceState
+        : !termBackdrop.classList.contains('open');
+      termBackdrop.classList.toggle('open', willOpen);
+      if (willOpen) setTimeout(() => termInput.focus(), 40);
     }
-});
-lightboxClose.addEventListener('click', () => lightbox.classList.remove('active'));
-lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.classList.remove('active'); });
+    document.getElementById('openTermBtn').addEventListener('click', () => toggleTerm(true));
+    termBackdrop.addEventListener('click', (e) => {
+      if (e.target === termBackdrop) toggleTerm(false);
+    });
 
-document.addEventListener('mousedown', () => document.querySelector('.cursor').classList.add('click'));
-document.addEventListener('mouseup', () => document.querySelector('.cursor').classList.remove('click'));
+    const konami = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','KeyB','KeyA'];
+    let kPos = 0;
 
-const mainView = document.getElementById('main-view');
-const projectsView = document.getElementById('projects-view');
-const btnOpenProjects = document.getElementById('open-projects-btn');
-const btnBack = document.getElementById('back-btn');
-
-function switchPage(hideEl, showEl) {
-    hideEl.style.opacity = '0';
-    hideEl.style.transform = 'translateY(-20px)';
-    setTimeout(() => {
-        hideEl.style.display = 'none';
-        showEl.style.display = 'block';
-        showEl.offsetHeight;
-        showEl.style.opacity = '1';
-        showEl.style.transform = 'translateY(0)';
-    }, 400);
-}
-
-btnOpenProjects.addEventListener('click', (e) => { e.preventDefault(); switchPage(mainView, projectsView); });
-btnBack.addEventListener('click', (e) => { e.preventDefault(); switchPage(projectsView, mainView); });
-
-const preloader = document.getElementById('preloader');
-const loaderInit = document.getElementById('loader-init');
-const continueBtn = document.getElementById('continue-btn');
-const bgMusic = document.getElementById('bgMusic');
-const cursor = document.querySelector('.cursor');
-
-const musicProgressContainer = document.querySelector('.music-progress-container');
-const musicCurrentTime = document.getElementById('music-current-time');
-const musicTotalTime = document.getElementById('music-total-time');
-const musicProgressFill = document.querySelector('.music-progress-fill');
-
-let musicProgressInterval;
-let currentTrack = null;
-let gameStartTime = null;
-let gameName = "";
-let lastTrackId = null;
-let lastPlayingState = null;
-let lastTimestamps = { start: null, end: null };
-const SEEK_THRESHOLD_MS = 3000;
-
-const imgA = document.querySelector('.img-a');
-const imgB = document.querySelector('.img-b');
-let activeImg = imgA;
-let inactiveImg = imgB;
-imgA.classList.add('visible');
-imgB.classList.add('hidden');
-
-function updateMusicProgress(startTime, endTime) {
-    if (!startTime || !endTime) return;
-    const totalDuration = endTime - startTime;
-    const updateProgress = () => {
-        const now = Date.now();
-        const elapsed = now - startTime;
-        if (elapsed < 0 || elapsed > totalDuration) {
-            clearInterval(musicProgressInterval);
-            if(musicProgressContainer) musicProgressContainer.style.display = 'none';
-            return;
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Backquote') {
+        e.preventDefault();
+        toggleTerm();
+      } else if (e.key === 'Escape') {
+        toggleTerm(false);
+        lightbox.classList.remove('open');
+      }
+      if (e.code === konami[kPos]) {
+        kPos++;
+        if (kPos === konami.length) {
+          kPos = 0;
+          toggleTerm(true);
+          appendTermLine('konami unlocked :: root@vrosik granted', '#34d399');
         }
-        const progress = Math.min(Math.max(elapsed / totalDuration, 0), 1);
-        const currentSec = Math.floor(elapsed / 1000);
-        const totalSec = Math.floor(totalDuration / 1000);
-        animateTime(musicCurrentTime, formatTime(currentSec));
-        musicTotalTime.textContent = formatTime(totalSec);
-        musicProgressFill.style.width = progress * 100 + '%';
-    };
-    clearInterval(musicProgressInterval);
-    updateProgress();
-    musicProgressInterval = setInterval(updateProgress, 1000);
-    if(musicProgressContainer) musicProgressContainer.style.display = 'block';
-}
+      } else {
+        kPos = 0;
+      }
+    });
 
-function checkAndSyncTimestamps(newStart, newEnd) {
-    if (!newStart || !newEnd) return;
-    const drift = Math.abs(newStart - (lastTimestamps.start || 0));
-    if (drift > SEEK_THRESHOLD_MS) {
-        lastTimestamps = { start: newStart, end: newEnd };
-        updateMusicProgress(newStart, newEnd);
+    function appendTermLine(text, color) {
+      const line = document.createElement('div');
+      if (color) line.style.color = color;
+      line.textContent = text;
+      termOutput.appendChild(line);
+      termOutput.scrollTop = termOutput.scrollHeight;
     }
-}
 
-function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return mins + ':' + (secs < 10 ? '0' : '') + secs;
-}
+    termInput.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      const raw = termInput.value.trim();
+      termInput.value = '';
+      if (!raw) return;
+      appendTermLine(`$ ${raw}`, '#7e7e8a');
+      const cmd = raw.toLowerCase();
+      if (cmd === 'help') {
+        appendTermLine('commands: whoami, specs, projects, clear, exit');
+      } else if (cmd === 'whoami') {
+        appendTermLine('vrosik — Volgograd | C++, RE, Game Modding');
+      } else if (cmd === 'specs') {
+        appendTermLine('CPU: i5-11400F | GPU: RX 590 GME | RAM: 16GB DDR4 | M.2 SSD');
+      } else if (cmd === 'projects') {
+        appendTermLine('[1] Ghost Exile - mod  [2] PlayGround releases');
+      } else if (cmd === 'clear') {
+        termOutput.innerHTML = '';
+      } else if (cmd === 'exit') {
+        toggleTerm(false);
+      } else {
+        appendTermLine(`zsh: command not found: ${raw}`, '#f87171');
+      }
+    });
 
-function setupGallery() {
-    const container = document.getElementById('moments-container');
-    const moments = container.querySelectorAll('.moment');
-    if(moments.length === 0) return;
-    const cloneCount = 3;
-    for (let i = 0; i < cloneCount; i++) {
-        moments.forEach(moment => {
-            const clone = moment.cloneNode(true);
-            container.appendChild(clone);
-        });
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      stars = Array.from({ length: 85 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.3 + 0.3,
+        a: Math.random() * 0.6 + 0.15,
+        s: Math.random() * 0.18 + 0.04
+      }));
     }
-    const totalWidth = container.scrollWidth / cloneCount;
-    container.style.animation = 'scrollGallery ' + (totalWidth * 0.015) + 's linear infinite';
-}
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        loaderInit.style.opacity = '0';
-        setTimeout(() => {
-            loaderInit.style.display = 'none';
-            continueBtn.style.display = 'block';
-        }, 500);
-    }, 1800);
-});
-
-continueBtn.addEventListener('click', () => {
-    preloader.style.opacity = '0';
-    bgMusic.volume = 0.15;
-    bgMusic.play().catch(e => console.log(e));
-    document.getElementById('musicToggle').innerHTML = '<i class="fas fa-music"></i>';
-    setTimeout(() => {
-        preloader.style.display = 'none';
-        document.body.classList.add('loaded');
-        setTimeout(typeWriter, 1000);
-        setupGallery();
-        fetchDiscordStatus();
-        setInterval(fetchDiscordStatus, 5000);
-    }, 800);
-});
-
-window.addEventListener('mousemove', (e) => {
-    cursor.style.left = e.clientX + 'px';
-    cursor.style.top = e.clientY + 'px';
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-});
-
-document.addEventListener('mouseover', (e) => {
-    if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.music-control') || e.target.closest('.moment')) {
-        cursor.classList.add('hovering');
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const st of stars) {
+        st.y -= st.s;
+        if (st.y < 0) st.y = canvas.height;
+        ctx.beginPath();
+        ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(210, 225, 255, ${st.a})`;
+        ctx.fill();
+      }
+      requestAnimationFrame(drawStars);
     }
-});
-document.addEventListener('mouseout', (e) => {
-    if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.music-control') || e.target.closest('.moment')) {
-        cursor.classList.remove('hovering');
+    drawStars();
+
+    const DISCORD_ID = '1491053386752196722';
+    const WORKER_URL = 'https://bitter-mountain-81e3.vrosik891.workers.dev/';
+
+    const spotifyLink = document.getElementById('spotifyLink');
+    const spotifyCover = document.getElementById('spotifyCover');
+    const trackTitle = document.getElementById('trackTitle');
+    const trackArtist = document.getElementById('trackArtist');
+    const playerBadge = document.getElementById('playerBadge');
+    const playerBadgeText = document.getElementById('playerBadgeText');
+    const spotifyEq = document.getElementById('spotifyEq');
+    const spotifyProgress = document.getElementById('spotifyProgress');
+    const spotifyProgressFill = document.getElementById('spotifyProgressFill');
+    const spotifyCurrentTime = document.getElementById('spotifyCurrentTime');
+    const spotifyDuration = document.getElementById('spotifyDuration');
+    const discordStatusDot = document.querySelector('.avatar-wrap .status-dot');
+
+    let lastActivityKey = null;
+    let activityTimestamps = null;
+    let activityProgressTimer = null;
+    let activityRequestPending = false;
+
+    function formatActivityTime(milliseconds) {
+      const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${minutes}:${String(seconds).padStart(2, '0')}`;
     }
-});
 
-const textToType = "10.12.2009 | City: Volgograd | Type: ISTJ | valid eblan";
-const typeContainer = document.getElementById('typewriter-text');
-let typeIndex = 0;
-function typeWriter() {
-    if (typeIndex < textToType.length) {
-        typeContainer.innerHTML += textToType.charAt(typeIndex);
-        typeIndex++;
-        setTimeout(typeWriter, 40);
+    function clearActivityProgress() {
+      activityTimestamps = null;
+      spotifyProgress.style.display = 'none';
+      spotifyProgressFill.style.width = '0%';
+      spotifyCurrentTime.textContent = '0:00';
+      spotifyDuration.textContent = '0:00';
+      if (activityProgressTimer) {
+        clearInterval(activityProgressTimer);
+        activityProgressTimer = null;
+      }
     }
-}
 
-const musicToggle = document.getElementById('musicToggle');
-musicToggle.addEventListener('click', function(e) {
-    e.stopPropagation();
-    if (bgMusic.paused) { bgMusic.play(); musicToggle.innerHTML = '<i class="fas fa-music"></i>'; }
-    else { bgMusic.pause(); musicToggle.innerHTML = '<i class="fas fa-volume-mute"></i>'; }
-});
+    function renderActivityProgress() {
+      if (!activityTimestamps) {
+        spotifyProgress.style.display = 'none';
+        return;
+      }
 
-const DISCORD_ID = '1491053386752196722';
-const WORKER_URL = 'https://bitter-mountain-81e3.vrosik891.workers.dev/';
+      const duration = activityTimestamps.end - activityTimestamps.start;
+      if (!Number.isFinite(duration) || duration <= 0) {
+        clearActivityProgress();
+        return;
+      }
 
-function parseMpExternalUrl(mpUrl) {
-    if (!mpUrl) return null;
-    const match = mpUrl.match(/^mp:external\/[^/]+\/(.+)\/https\/(.+)$/);
-    if (match) {
+      const elapsed = Date.now() - activityTimestamps.start;
+      const safeElapsed = Math.max(0, Math.min(elapsed, duration));
+      spotifyProgressFill.style.width = `${(safeElapsed / duration) * 100}%`;
+      spotifyCurrentTime.textContent = formatActivityTime(safeElapsed);
+      spotifyDuration.textContent = formatActivityTime(duration);
+      spotifyProgress.style.display = 'block';
+
+      if (elapsed >= duration && activityProgressTimer) {
+        clearInterval(activityProgressTimer);
+        activityProgressTimer = null;
+      }
+    }
+
+    function syncActivityProgress(timestamps, forceSync = false) {
+      const start = Number(timestamps && timestamps.start);
+      const end = Number(timestamps && timestamps.end);
+
+      if (!Number.isFinite(start) || !Number.isFinite(end) || start <= 0 || end <= start) {
+        clearActivityProgress();
+        return;
+      }
+
+      const shouldSync = forceSync || !activityTimestamps ||
+        Math.abs(start - activityTimestamps.start) > 3000 ||
+        Math.abs(end - activityTimestamps.end) > 3000;
+
+      if (shouldSync) activityTimestamps = { start, end };
+      renderActivityProgress();
+
+      if (!activityProgressTimer) {
+        activityProgressTimer = setInterval(renderActivityProgress, 1000);
+      }
+    }
+
+    function parseMpExternalUrl(mpUrl) {
+      if (!mpUrl) return null;
+      const match = String(mpUrl).match(/^mp:external\/[^/]+\/(.+)\/https\/(.+)$/);
+      if (match) {
         try {
-            const prefix = decodeURIComponent(match[1]);
-            const target = decodeURIComponent(match[2]);
-            return 'https://' + target + (prefix.startsWith('?') ? prefix : '');
-        } catch (e) {
-            return 'https://' + match[2];
+          const prefix = decodeURIComponent(match[1]);
+          const target = decodeURIComponent(match[2]);
+          return 'https://' + target + (prefix.startsWith('?') ? prefix : '');
+        } catch (error) {
+          return 'https://' + match[2];
         }
+      }
+      if (String(mpUrl).startsWith('https://') || String(mpUrl).startsWith('http://')) {
+        return String(mpUrl);
+      }
+      if (String(mpUrl).includes('https/')) {
+        return 'https://' + String(mpUrl).split('https/').pop();
+      }
+      return null;
     }
-    return null;
-}
 
-function updateDiscordStatus(data) {
-    if (!data || !data.success) return;
-    const payload = data.data;
-    const dot = document.querySelector('.status-dot');
-    const musicBox = document.querySelector('.music-progress-container');
-    if(dot) dot.className = 'status-dot status-' + payload.discord_status;
-    const activities = payload.activities || [];
+    function updateAccentFromImage(imageUrl) {
+      if (!imageUrl || typeof ColorThief === 'undefined') return;
 
-    if(payload.listening_to_spotify && payload.spotify){
-        if (!payload.spotify.timestamps) lastPlayingState = false;
-        const cover = document.getElementById('spotify-cover');
-        const link = document.getElementById('spotify-link');
-        if (cover && link) {
-            const isNewTrack = payload.spotify.track_id !== lastTrackId;
-            const isResumed = lastPlayingState === false && payload.spotify.timestamps;
-            if (isNewTrack || isResumed) {
-                lastTrackId = payload.spotify.track_id;
-                const newSrc = payload.spotify.album_art_url;
-                const newText = payload.spotify.artist + ' - ' + payload.spotify.song;
-                clearInterval(musicProgressInterval);
-                if (musicProgressContainer) musicProgressContainer.style.display = 'none';
-                const currentId = payload.spotify.track_id;
-                inactiveImg.src = newSrc;
-                inactiveImg.crossOrigin = "anonymous";
-                inactiveImg.onload = () => {
-                    if (currentId !== lastTrackId) return;
-                    document.getElementById('status-text').textContent = newText;
-                    inactiveImg.classList.add('visible');
-                    inactiveImg.classList.remove('hidden');
-                    activeImg.classList.remove('visible');
-                    activeImg.classList.add('hidden');
-                    const tempImg = activeImg;
-                    activeImg = inactiveImg;
-                    inactiveImg = tempImg;
-                    const colorThief = new ColorThief();
-                    const color = colorThief.getColor(activeImg);
-                    const rgb = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
-                    const glow = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`;
-                    document.documentElement.style.setProperty('--accent', rgb);
-                    document.documentElement.style.setProperty('--accent-glow', glow);
-                    if (payload.spotify.timestamps) {
-                        lastTimestamps = { start: payload.spotify.timestamps.start, end: payload.spotify.timestamps.end };
-                        updateMusicProgress(payload.spotify.timestamps.start, payload.spotify.timestamps.end);
-                    }
-                };
-            } else {
-                if (payload.spotify.timestamps) checkAndSyncTimestamps(payload.spotify.timestamps.start, payload.spotify.timestamps.end);
+      const readColor = (sourceUrl, allowProxy) => {
+        const image = new Image();
+        image.crossOrigin = 'anonymous';
+        image.onload = () => {
+          try {
+            const color = new ColorThief().getColor(image);
+            const rgb = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+            const glow = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`;
+            document.documentElement.style.setProperty('--accent', rgb);
+            document.documentElement.style.setProperty('--accent-glow', glow);
+          } catch (error) {
+            if (!allowProxy && /^https?:\/\//i.test(imageUrl)) {
+              const cleanUrl = imageUrl.replace(/^https?:\/\//i, '');
+              readColor(`https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}`, true);
             }
-            link.href = 'https://open.spotify.com/track/' + payload.spotify.track_id;
-            cover.style.display = 'block';
-            lastTrackId = payload.spotify.track_id;
-            lastPlayingState = true;
-        }
-        return;
+          }
+        };
+        image.onerror = () => {
+          if (!allowProxy && /^https?:\/\//i.test(imageUrl)) {
+            const cleanUrl = imageUrl.replace(/^https?:\/\//i, '');
+            readColor(`https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}`, true);
+          }
+        };
+        image.src = sourceUrl;
+      };
+
+      readColor(String(imageUrl), false);
     }
 
-    const film = activities.find(a => a.type === 3 && a.name === 'Фильм');
-    if (film) {
-        const cover = document.getElementById('spotify-cover');
-        const link = document.getElementById('spotify-link');
-        const rawImg = film.assets && film.assets.large_image;
-        let thumbUrl = parseMpExternalUrl(rawImg);
-        if (!thumbUrl && rawImg && rawImg.includes('https/')) {
-            thumbUrl = 'https://' + rawImg.split('https/')[1];
-        }
+    function setActivityCover(imageUrl, destinationUrl = '#', openInNewTab = false) {
+      if (!imageUrl) {
+        spotifyLink.style.display = 'none';
+        spotifyCover.removeAttribute('src');
+        spotifyLink.removeAttribute('target');
+        spotifyLink.href = '#';
+        return;
+      }
+
+      const normalizedUrl = String(imageUrl);
+      if (spotifyCover.getAttribute('src') !== normalizedUrl) {
+        spotifyCover.src = normalizedUrl;
+        updateAccentFromImage(normalizedUrl);
+      }
+      spotifyLink.href = destinationUrl || '#';
+      spotifyLink.setAttribute('aria-label', 'Open current activity');
+      if (openInNewTab) {
+        spotifyLink.target = '_blank';
+        spotifyLink.rel = 'noopener noreferrer';
+      } else {
+        spotifyLink.removeAttribute('target');
+      }
+      spotifyLink.style.display = 'block';
+    }
+
+    spotifyCover.addEventListener('error', () => {
+      spotifyLink.style.display = 'none';
+    });
+
+    function setPlayerState(title, detail, badge, paused = false) {
+      trackTitle.textContent = title || 'Unknown activity';
+      trackArtist.textContent = detail || '';
+      playerBadgeText.textContent = badge || 'Discord / Activity';
+      spotifyEq.classList.toggle('paused', paused);
+      playerBadge.classList.toggle('paused', paused);
+    }
+
+    function setActivityIdle(title, detail = 'No active Discord activity') {
+      setPlayerState(title, detail, 'Discord / Status', true);
+      setActivityCover(null);
+      clearActivityProgress();
+      lastActivityKey = null;
+    }
+
+    function setDiscordPresenceStatus(status) {
+      if (!discordStatusDot) return;
+      const allowedStatuses = ['online', 'idle', 'dnd', 'offline'];
+      const normalizedStatus = String(status || 'offline').toLowerCase();
+      discordStatusDot.className = 'status-dot ' +
+        (allowedStatuses.includes(normalizedStatus) ? normalizedStatus : 'offline');
+    }
+
+    function applyActivity(options) {
+      const changed = options.key !== lastActivityKey;
+      setPlayerState(options.title, options.detail, options.badge, Boolean(options.paused));
+      setActivityCover(options.imageUrl, options.destinationUrl, options.openInNewTab);
+      syncActivityProgress(options.timestamps, changed || Boolean(options.forceProgressSync));
+      lastActivityKey = options.key;
+    }
+
+    function updateDiscordStatus(responseData) {
+      if (!responseData || responseData.success !== true || !responseData.data) {
+        setActivityIdle('Activity unavailable', 'The Discord activity service returned no data');
+        return;
+      }
+
+      const payload = responseData.data;
+      const activities = Array.isArray(payload.activities) ? payload.activities : [];
+      setDiscordPresenceStatus(payload.discord_status);
+
+      if (payload.listening_to_spotify && payload.spotify) {
+        const spotify = payload.spotify;
+        const trackId = spotify.track_id || `${spotify.song || ''}-${spotify.artist || ''}`;
+        const isPlaying = Boolean(spotify.timestamps && spotify.timestamps.start && spotify.timestamps.end);
+
+        applyActivity({
+          key: `spotify:${trackId}`,
+          title: spotify.song || 'Unknown track',
+          detail: spotify.artist || 'Unknown artist',
+          badge: isPlaying ? 'Spotify / Listening' : 'Spotify / Paused',
+          paused: !isPlaying,
+          imageUrl: spotify.album_art_url || null,
+          destinationUrl: spotify.track_id
+            ? `https://open.spotify.com/track/${encodeURIComponent(spotify.track_id)}`
+            : 'https://open.spotify.com/',
+          openInNewTab: true,
+          timestamps: spotify.timestamps
+        });
+        return;
+      }
+
+      const film = activities.find(activity => activity.type === 3 && activity.name === 'Фильм');
+      if (film) {
         const filmTitle = film.details || 'Фильм';
-        const timestamps = film.timestamps;
-        const isNew = filmTitle !== lastTrackId;
-        
-        if (isNew) {
-            lastTrackId = filmTitle;
-            clearInterval(musicProgressInterval);
-            if (musicProgressContainer) musicProgressContainer.style.display = 'none';
-            document.getElementById('status-text').textContent = '🎬 ' + filmTitle;
-            
-            if (cover && link) {
-                link.href = '#';
-                link.removeAttribute('target');
-                
-                if (thumbUrl) {
-                    inactiveImg.removeAttribute('crossorigin');
-                    inactiveImg.src = thumbUrl;
-                    inactiveImg.onload = () => {
-                        inactiveImg.classList.add('visible');
-                        inactiveImg.classList.remove('hidden');
-                        activeImg.classList.remove('visible');
-                        activeImg.classList.add('hidden');
-                        const tmp = activeImg;
-                        activeImg = inactiveImg;
-                        inactiveImg = tmp;
-                        
-                        const proxied = thumbUrl.replace('https://', 'https://images.weserv.nl/?url=');
-                        const colorImg = new Image();
-                        colorImg.crossOrigin = 'anonymous';
-                        colorImg.onload = () => {
-                            try {
-                                const colorThief = new ColorThief();
-                                const color = colorThief.getColor(colorImg);
-                                document.documentElement.style.setProperty('--accent', `rgb(${color[0]}, ${color[1]}, ${color[2]})`);
-                                document.documentElement.style.setProperty('--accent-glow', `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`);
-                            } catch(e) {}
-                        };
-                        colorImg.src = proxied;
-                        
-                        if (timestamps && timestamps.start && timestamps.end) {
-                            lastTimestamps = { start: timestamps.start, end: timestamps.end };
-                            updateMusicProgress(timestamps.start, timestamps.end);
-                        }
-                    };
-                    inactiveImg.onerror = () => {
-                        cover.style.display = 'none';
-                        if (timestamps && timestamps.start && timestamps.end) {
-                            lastTimestamps = { start: timestamps.start, end: timestamps.end };
-                            updateMusicProgress(timestamps.start, timestamps.end);
-                        }
-                    };
-                    cover.style.display = 'block';
-                } else {
-                    cover.style.display = 'none';
-                    if (timestamps && timestamps.start && timestamps.end) {
-                        lastTimestamps = { start: timestamps.start, end: timestamps.end };
-                        updateMusicProgress(timestamps.start, timestamps.end);
-                    }
-                }
-            }
-            lastPlayingState = true;
-        } else {
-            if (cover) cover.style.display = thumbUrl ? 'block' : 'none';
-            if (timestamps && timestamps.start && timestamps.end) checkAndSyncTimestamps(timestamps.start, timestamps.end);
-        }
+        const imageUrl = parseMpExternalUrl(film.assets && film.assets.large_image);
+        applyActivity({
+          key: `film:${filmTitle}`,
+          title: `🎬 ${filmTitle}`,
+          detail: film.state || 'Watching',
+          badge: 'Discord / Film',
+          imageUrl,
+          destinationUrl: '#',
+          openInNewTab: false,
+          timestamps: film.timestamps
+        });
         return;
-    }
+      }
 
-    const youtube = activities.find(a => a.type === 3 && a.name === 'YouTube');
-    if (youtube) {
-        const cover = document.getElementById('spotify-cover');
-        const link = document.getElementById('spotify-link');
-        const rawImg = youtube.assets && youtube.assets.large_image;
-        const thumbUrl = parseMpExternalUrl(rawImg);
+      const youtube = activities.find(activity => activity.type === 3 && activity.name === 'YouTube');
+      if (youtube) {
         const videoTitle = youtube.details || 'YouTube';
         const channelName = youtube.state || '';
-        const timestamps = youtube.timestamps;
-        const ytKey = videoTitle + channelName;
-        const isNew = ytKey !== lastTrackId;
-        if (isNew) {
-            lastTrackId = ytKey;
-            clearInterval(musicProgressInterval);
-            if (musicProgressContainer) musicProgressContainer.style.display = 'none';
-            const displayText = channelName ? '▶ ' + channelName + ' — ' + videoTitle : '▶ ' + videoTitle;
-            document.getElementById('status-text').textContent = displayText;
-            if (cover && link) {
-                const searchQuery = encodeURIComponent((channelName ? channelName + ' ' : '') + videoTitle);
-                link.href = 'https://www.youtube.com/results?search_query=' + searchQuery;
-                link.target = '_blank';
-                if (thumbUrl) {
-                    inactiveImg.removeAttribute('crossorigin');
-                    inactiveImg.src = thumbUrl;
-                    inactiveImg.onload = () => {
-                        inactiveImg.classList.add('visible');
-                        inactiveImg.classList.remove('hidden');
-                        activeImg.classList.remove('visible');
-                        activeImg.classList.add('hidden');
-                        const tmp = activeImg;
-                        activeImg = inactiveImg;
-                        inactiveImg = tmp;
-                        const proxied = thumbUrl.replace('https://', 'https://images.weserv.nl/?url=');
-                        const colorImg = new Image();
-                        colorImg.crossOrigin = 'anonymous';
-                        colorImg.onload = () => {
-                            try {
-                                const colorThief = new ColorThief();
-                                const color = colorThief.getColor(colorImg);
-                                document.documentElement.style.setProperty('--accent', `rgb(${color[0]}, ${color[1]}, ${color[2]})`);
-                                document.documentElement.style.setProperty('--accent-glow', `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`);
-                            } catch(e) {}
-                        };
-                        colorImg.src = proxied;
-                        if (timestamps && timestamps.start && timestamps.end) {
-                            lastTimestamps = { start: timestamps.start, end: timestamps.end };
-                            updateMusicProgress(timestamps.start, timestamps.end);
-                        }
-                    };
-                    inactiveImg.onerror = () => {
-                        cover.style.display = 'none';
-                        if (timestamps && timestamps.start && timestamps.end) {
-                            lastTimestamps = { start: timestamps.start, end: timestamps.end };
-                            updateMusicProgress(timestamps.start, timestamps.end);
-                        }
-                    };
-                    cover.style.display = 'block';
-                } else {
-                    cover.style.display = 'none';
-                    if (timestamps && timestamps.start && timestamps.end) {
-                        lastTimestamps = { start: timestamps.start, end: timestamps.end };
-                        updateMusicProgress(timestamps.start, timestamps.end);
-                    }
-                }
-            }
-            lastPlayingState = true;
-        } else {
-            if (cover) cover.style.display = thumbUrl ? 'block' : 'none';
-            if (timestamps && timestamps.start && timestamps.end) checkAndSyncTimestamps(timestamps.start, timestamps.end);
-        }
-        return;
-    }
-
-    const twitch = activities.find(a => a.type === 3 && a.name === 'Twitch');
-    if (twitch) {
-        const cover = document.getElementById('spotify-cover');
-        const link = document.getElementById('spotify-link');
-        const rawImg = twitch.assets && twitch.assets.large_image;
-        const thumbUrl = parseMpExternalUrl(rawImg);
-        const streamTitle = twitch.details || 'Twitch';
-        const streamerName = twitch.state || '';
-        const twKey = streamTitle + streamerName;
-        const isNew = twKey !== lastTrackId;
-        if (isNew) {
-            lastTrackId = twKey;
-            clearInterval(musicProgressInterval);
-            if (musicProgressContainer) musicProgressContainer.style.display = 'none';
-            const displayText = streamerName ? '🟣 ' + streamerName + ' — ' + streamTitle : '🟣 ' + streamTitle;
-            document.getElementById('status-text').textContent = displayText;
-            if (cover && link) {
-                link.href = 'https://www.twitch.tv/' + (streamerName || '');
-                link.target = '_blank';
-                if (thumbUrl) {
-                    inactiveImg.removeAttribute('crossorigin');
-                    inactiveImg.src = thumbUrl;
-                    inactiveImg.onload = () => {
-                        inactiveImg.classList.add('visible');
-                        inactiveImg.classList.remove('hidden');
-                        activeImg.classList.remove('visible');
-                        activeImg.classList.add('hidden');
-                        const tmp = activeImg;
-                        activeImg = inactiveImg;
-                        inactiveImg = tmp;
-                        const proxied = thumbUrl.replace('https://', 'https://images.weserv.nl/?url=');
-                        const colorImg = new Image();
-                        colorImg.crossOrigin = 'anonymous';
-                        colorImg.onload = () => {
-                            try {
-                                const colorThief = new ColorThief();
-                                const color = colorThief.getColor(colorImg);
-                                document.documentElement.style.setProperty('--accent', `rgb(${color[0]}, ${color[1]}, ${color[2]})`);
-                                document.documentElement.style.setProperty('--accent-glow', `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`);
-                            } catch(e) {}
-                        };
-                        colorImg.src = proxied;
-                    };
-                    inactiveImg.onerror = () => { cover.style.display = 'none'; };
-                    cover.style.display = 'block';
-                } else {
-                    cover.style.display = 'none';
-                }
-            }
-            lastPlayingState = true;
-        } else {
-            if (cover) cover.style.display = thumbUrl ? 'block' : 'none';
-        }
-        return;
-    }
-
-    const game = activities.find(a => a.type === 0);
-    if(game){
-        gameName = game.name;
-        gameStartTime = game.timestamps ? game.timestamps.start : null;
-        document.getElementById('status-text').textContent = '🎮 ' + gameName;
-        if(musicBox) musicBox.style.display = 'none';
-        const cover = document.getElementById('spotify-cover');
-        if (cover) cover.style.display = 'none';
-        lastTrackId = null;
-        lastTimestamps = { start: null, end: null };
-        return;
-    } else {
-        gameStartTime = null;
-    }
-
-    const custom = activities.find(a => a.type === 4);
-    if(custom){
-        document.getElementById('status-text').textContent = custom.state || '';
-        lastPlayingState = false;
-        if(musicBox) musicBox.style.display='none';
-        const cover = document.getElementById('spotify-cover');
-        if (cover) cover.style.display = 'none';
-        lastTrackId = null;
-        lastTimestamps = { start: null, end: null };
-        return;
-    }
-
-    document.getElementById('status-text').textContent = payload.discord_status.toUpperCase();
-    lastPlayingState = false;
-    if(musicBox) musicBox.style.display='none';
-    const cover = document.getElementById('spotify-cover');
-    if (cover) cover.style.display = 'none';
-    lastTrackId = null;
-    lastTimestamps = { start: null, end: null };
-}
-
-function animateTime(el, newValue) {
-    const chars = newValue.split('');
-    let spans = el.querySelectorAll('span');
-    if (spans.length !== chars.length) {
-        el.innerHTML = '';
-        chars.forEach(char => {
-            const span = document.createElement('span');
-            span.textContent = char;
-            el.appendChild(span);
+        const imageUrl = parseMpExternalUrl(youtube.assets && youtube.assets.large_image);
+        const searchText = encodeURIComponent((channelName ? channelName + ' ' : '') + videoTitle);
+        applyActivity({
+          key: `youtube:${videoTitle}:${channelName}`,
+          title: `▶ ${videoTitle}`,
+          detail: channelName || 'Watching on YouTube',
+          badge: 'YouTube / Watching',
+          imageUrl,
+          destinationUrl: `https://www.youtube.com/results?search_query=${searchText}`,
+          openInNewTab: true,
+          timestamps: youtube.timestamps
         });
         return;
+      }
+
+      const twitch = activities.find(activity => activity.type === 3 && activity.name === 'Twitch');
+      if (twitch) {
+        const streamTitle = twitch.details || 'Twitch';
+        const streamerName = twitch.state || '';
+        const imageUrl = parseMpExternalUrl(twitch.assets && twitch.assets.large_image);
+        const channelUrl = streamerName
+          ? `https://www.twitch.tv/${encodeURIComponent(streamerName)}`
+          : 'https://www.twitch.tv/';
+        applyActivity({
+          key: `twitch:${streamTitle}:${streamerName}`,
+          title: `🟣 ${streamTitle}`,
+          detail: streamerName || 'Watching on Twitch',
+          badge: 'Twitch / Watching',
+          imageUrl,
+          destinationUrl: channelUrl,
+          openInNewTab: true,
+          timestamps: twitch.timestamps
+        });
+        return;
+      }
+
+      const game = activities.find(activity => activity.type === 0);
+      if (game) {
+        const gameName = game.name || 'Game';
+        setPlayerState(`🎮 ${gameName}`, game.details || game.state || 'Playing a game', 'Discord / Game', false);
+        setActivityCover(null);
+        clearActivityProgress();
+        lastActivityKey = `game:${gameName}`;
+        return;
+      }
+
+      const custom = activities.find(activity => activity.type === 4);
+      if (custom) {
+        const customText = custom.state || 'Custom status';
+        const emojiName = custom.emoji && custom.emoji.name ? custom.emoji.name : '';
+        const displayText = emojiName ? `${emojiName} ${customText}` : customText;
+        setPlayerState(displayText, 'Discord custom status', 'Discord / Custom Status', false);
+        setActivityCover(null);
+        clearActivityProgress();
+        lastActivityKey = `custom:${displayText}`;
+        return;
+      }
+
+      const status = String(payload.discord_status || 'offline').toUpperCase();
+      setActivityIdle(status, 'No active Discord activity');
     }
-    chars.forEach((char, i) => {
-        if (spans[i].textContent !== char) {
-            spans[i].textContent = char;
-            spans[i].style.animation = 'none';
-            spans[i].offsetHeight;
-            spans[i].style.animation = 'timeUp 0.25s ease';
+
+    async function fetchDiscordStatus() {
+      if (activityRequestPending) return;
+      activityRequestPending = true;
+      try {
+        const response = await fetch(`${WORKER_URL}?id=${encodeURIComponent(DISCORD_ID)}`, {
+          method: 'GET',
+          cache: 'no-store'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const responseData = await response.json();
+        updateDiscordStatus(responseData);
+      } catch (error) {
+        console.warn('Discord activity fetch failed:', error);
+        if (!lastActivityKey) {
+          setActivityIdle('Activity connection unavailable', 'Could not reach the activity service');
         }
-    });
-}
-
-function initStaticTime(el) {
-    const chars = el.textContent.split('');
-    el.innerHTML = '';
-    chars.forEach(char => {
-        const span = document.createElement('span');
-        span.textContent = char;
-        el.appendChild(span);
-    });
-}
-
-initStaticTime(musicTotalTime);
-
-async function fetchDiscordStatus() {
-    try {
-        const response = await fetch(WORKER_URL + '?id=' + DISCORD_ID);
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-        const data = await response.json();
-        updateDiscordStatus(data);
-    } catch (e) {
-        console.log('Error fetching status:', e);
+      } finally {
+        activityRequestPending = false;
+      }
     }
-}
-    </script>
+
+    fetchDiscordStatus();
+    setInterval(fetchDiscordStatus, 5000);
+
+    const bgAudio = document.getElementById('bgAudio');
+    const soundBtn = document.getElementById('soundBtn');
+    soundBtn.addEventListener('click', () => {
+      if (bgAudio.paused) {
+        bgAudio.volume = 0.25;
+        bgAudio.play().catch(() => {});
+        soundBtn.textContent = '🔊';
+      } else {
+        bgAudio.pause();
+        soundBtn.textContent = '🔇';
+      }
+    });
+  </script>
 </body>
 </html>
